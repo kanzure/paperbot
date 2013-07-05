@@ -41,8 +41,8 @@ def scihubber(url, **kwargs):
         Derper().feed(re)
         qq = filter(lambda x: str.find(x.get("href","").encode("utf8"), "pdf") != -1, _as)
         qq += filter(lambda x: str.find(x.get("src","").encode("utf8"), "pdf") != -1, _frames)
-        qq = filter(lambda x: x, map(lambda x: x.get("href", x.get("src", None)), qq))
-        it = itertools.ifilter(lambda x:x,
+        qq = filter(None, map(lambda x: x.get("href", x.get("src", None)), qq))
+        it = itertools.ifilter(None,
             itertools.imap(lambda x: _go("http://%s.sci-hub.org/%s" % (a.hostname, x)), qq))
         try: return it.next()
         except StopIteration: return None
