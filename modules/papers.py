@@ -8,45 +8,9 @@ import random
 import requests
 import lxml.etree
 from StringIO import StringIO
+from scihub import scihubber
 
 import pdfparanoia
-
-from HTMLParser import HTMLParser
-from urlparse import urlparse
-import itertools
-
-def scihubber(url, **kwargs):
-    """
-    Takes user url and traverses sci-hub proxy system until pdf is found.
-    When successful, returns either sci-hub pdfcache or libgen pdf url
-    """
-    a = urlparse(url)
-    geturl = "http://%s.sci-hub.org/%s?%s" % (a.hostname, a.path, a.query)
-    def _go(_url):
-        _as = []
-        _frames = []
-        just = []
-        class MaybeTail(HTMLParser):
-            def handle_starttag(self, tag, attrs):
-                if tag == "frame":
-                    d = dict(attrs)
-                    if d.get("name","").encode("utf8") == "_pdf": just.append(d.get("src", None))
-        class Derper(HTMLParser):
-            def handle_starttag(self, tag, attrs):
-                if tag == "a": _as.append(dict(attrs))
-                elif tag == "frame": _frames.append(dict(attrs))
-        re = requests.get(_url, **kwargs).text.encode("utf8")
-        MaybeTail().feed(re)
-        if just: return just[0]
-        Derper().feed(re)
-        qq = filter(lambda x: str.find(x.get("href","").encode("utf8"), "pdf") != -1, _as)
-        qq += filter(lambda x: str.find(x.get("src","").encode("utf8"), "pdf") != -1, _frames)
-        qq = filter(None, map(lambda x: x.get("href", x.get("src", None)), qq))
-        it = itertools.ifilter(None,
-            itertools.imap(lambda x: _go("http://%s.sci-hub.org/%s" % (a.hostname, x)), qq))
-        try: return it.next()
-        except StopIteration: return None
-    return _go(geturl)
 
 def download(phenny, input, verbose=True):
     """
