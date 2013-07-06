@@ -1,3 +1,7 @@
+"""
+Integration with http://sci-hub.org/
+"""
+
 import requests
 from HTMLParser import HTMLParser
 from urlparse import urlparse
