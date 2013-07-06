@@ -57,8 +57,7 @@ def scihubber(url, **kwargs):
             def handle_starttag(self, tag, attrs):
                 if tag == "a": _as.append(dict(attrs))
                 elif tag == "frame" or tag == "iframe": _frames.append(dict(attrs))
-           
-            
+
         re = requests.get(_url, **kwargs).text.encode("utf8")
         if not _doi:
             MaybeDOI().feed(re)
