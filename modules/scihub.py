@@ -12,12 +12,13 @@ import urllib
 import base64
 import os
 
-
-
 def cookie(fn):
     scihub_cookie = os.environ.get("SCIHUB_PASSWORD", None)
     if scihub_cookie:
-        return lambda: fn(cookies = {scihub_cookie: ""})
+        def _fn(**kw):
+            if "cookies" not in kw: kw["cookies] = {scihub_cookie: ""}
+            return fn(**kw)
+        return _fn
     else:
         raise Exception("need SCIHUB_PASSWORD set")
 
