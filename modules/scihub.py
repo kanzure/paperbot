@@ -3,13 +3,10 @@ Integration with http://sci-hub.org/
 """
 
 import requests
-from HTMLParser import HTMLParser
 from urlparse import urlparse
 import itertools
 from lxml import etree
 from StringIO import StringIO
-import urllib
-import base64
 import os
 
 def cookie(fn):
