@@ -16,6 +16,8 @@ if scihub_cookie == None:
     raise Exception("need SCIHUB_PASSWORD set")
 
 def libgen(url, doi, **kwargs):
+    if "cookies" not in kwargs.keys():
+        kwargs["cookies"] = {scihub_cookie: ""}
     auth_ = requests.auth.HTTPBasicAuth("genesis", "upload")
     re = requests.get(url, **kwargs)
     payload = "data:application/pdf;base64," + base64.b64encode(re.content)
