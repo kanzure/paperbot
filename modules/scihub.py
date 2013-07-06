@@ -12,14 +12,17 @@ import urllib
 import base64
 import os
 
-scihub_cookie = os.environ.get("SCIHUB_PASSWORD", None)
 
-if scihub_cookie:
-    defcookie = {scihub_cookie: ""}
-else
-    raise Exception("need SCIHUB_PASSWORD set")
 
-def libgen(url, doi, cookies = defcookie, **kwargs):
+def cookie(fn):
+    scihub_cookie = os.environ.get("SCIHUB_PASSWORD", None)
+    if scihub_cookie:
+        return lambda: fn(cookies = {scihub_cookie: ""})
+    else:
+        raise Exception("need SCIHUB_PASSWORD set")
+
+@cookie
+def libgen(url, doi, **kwargs):
     auth_ = requests.auth.HTTPBasicAuth("genesis", "upload")
     re = requests.get(url, **kwargs)
     re = requests.post("http://libgen.org/scimag/librarian/form.php", auth = auth_,
@@ -29,7 +32,8 @@ def libgen(url, doi, cookies = defcookie, **kwargs):
     re = requests.get("http://libgen.org/scimag/librarian/register.php", data = formp, auth = auth_)
     return "http://libgen.org/scimag5/" + doi
 
-def scihubber(url, cookies = defcookie, **kwargs):
+@cookie
+def scihubber(url, **kwargs):
     """
     Takes user url and traverses sci-hub proxy system until pdf is found.
     When successful, returns either sci-hub pdfcache or libgen pdf url
