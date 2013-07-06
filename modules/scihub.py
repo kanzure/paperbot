@@ -14,15 +14,14 @@ import os
 
 scihub_cookie = os.environ.get("SCIHUB_PASSWORD", None)
 
-if scihub_cookie == None:
+if scihub_cookie:
+    defcookie = {scihub_cookie: ""}
+else
     raise Exception("need SCIHUB_PASSWORD set")
 
-def libgen(url, doi, **kwargs):
-    if "cookies" not in kwargs.keys():
-        kwargs["cookies"] = {scihub_cookie: ""}
+def libgen(url, doi, cookies = defcookie, **kwargs):
     auth_ = requests.auth.HTTPBasicAuth("genesis", "upload")
     re = requests.get(url, **kwargs)
-    payload = "data:application/pdf;base64," + base64.b64encode(re.content)
     re = requests.post("http://libgen.org/scimag/librarian/form.php", auth = auth_,
        files = {"uploadedfile":("derp.pdf", re.content)}, data = {"doi": doi})
     shu = etree.parse(StringIO(re.text), etree.HTMLParser())
@@ -30,15 +29,11 @@ def libgen(url, doi, **kwargs):
     re = requests.get("http://libgen.org/scimag/librarian/register.php", data = formp, auth = auth_)
     return "http://libgen.org/scimag5/" + doi
 
-def scihubber(url, **kwargs):
+def scihubber(url, cookies = defcookie, **kwargs):
     """
     Takes user url and traverses sci-hub proxy system until pdf is found.
     When successful, returns either sci-hub pdfcache or libgen pdf url
     """
-    # include a cookie for sci-hub.org access
-    if "cookies" not in kwargs.keys():
-        kwargs["cookies"] = {scihub_cookie: ""}
-
     a = urlparse(url)
     geturl = "http://%s.sci-hub.org/%s?%s" % (a.hostname, a.path, a.query)
     def _go(_url, _doi = None):
