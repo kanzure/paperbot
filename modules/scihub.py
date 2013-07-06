@@ -38,7 +38,7 @@ def scihubber(url, cookies = defcookie, **kwargs):
     geturl = "http://%s.sci-hub.org/%s?%s" % (a.hostname, a.path, a.query)
     def _go(_url, _doi = None):
         re = requests.get(_url, **kwargs).text.encode("utf8")
-        shu = etree.parse(StringIO(re.text),etree.HTMLParser())
+        shu = etree.parse(StringIO(re),etree.HTMLParser())
         if not _doi:
             metas = map(lambda x:x.get("content"), shu.xpath("//meta[contains(@name,'doi')]"))
             _as = map(lambda x:urllib.unquote(x.get("href")), shu.xpath("//a[contains(@href,'doi')]"))
