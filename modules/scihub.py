@@ -16,7 +16,8 @@ def cookie(fn):
     scihub_cookie = os.environ.get("SCIHUB_PASSWORD", None)
     if scihub_cookie:
         def _fn(**kw):
-            if "cookies" not in kw: kw["cookies] = {scihub_cookie: ""}
+            if "cookies" not in kw: kw["cookies"] = {scihub_cookie: ""}
+            elif scihub_cookie not in kw["cookies"]: kw["cookies"]["scihub_cookie"] = ""
             return fn(**kw)
         return _fn
     else:
