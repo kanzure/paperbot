@@ -8,6 +8,12 @@ from urlparse import urlparse
 import itertools
 import urllib
 import base64
+import os
+
+scihub_cookie = os.environ.get("SCIHUB_PASSWORD", None)
+
+if scihub_cookie == None:
+    raise Exception("need SCIHUB_PASSWORD set")
 
 def libgen(url, doi):
     auth_ = requests.auth.HTTPBasicAuth("genesis", "upload")
@@ -28,6 +34,10 @@ def scihubber(url, **kwargs):
     Takes user url and traverses sci-hub proxy system until pdf is found.
     When successful, returns either sci-hub pdfcache or libgen pdf url
     """
+    # include a cookie for sci-hub.org access
+    if "cookies" not in kwargs.keys():
+        kwargs["cookies"] = {scihub_cookie: ""}
+
     a = urlparse(url)
     geturl = "http://%s.sci-hub.org/%s?%s" % (a.hostname, a.path, a.query)
     def _go(_url, _doi = None):
