@@ -42,17 +42,6 @@ def scihubber(url, **kwargs):
     a = urlparse(url)
     geturl = "http://%s.sci-hub.org/%s?%s" % (a.hostname, a.path, a.query)
     def _go(_url, _doi = None):
-        class MaybeTail(HTMLParser):
-            def handle_starttag(self, tag, attrs):
-                if tag == "frame":
-                    d = dict(attrs)
-                    if d.get("name","").encode("utf8") == "_pdf": just.append(d.get("src", None))
-
-        class Derper(HTMLParser):
-            def handle_starttag(self, tag, attrs):
-                if tag == "a": _as.append(dict(attrs))
-                elif tag == "frame" or tag == "iframe": _frames.append(dict(attrs))
-
         re = requests.get(_url, **kwargs).text.encode("utf8")
         shu = etree.parse(StringIO(re.text),etree.HTMLParser())
         if not _doi:
