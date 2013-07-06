@@ -8,7 +8,7 @@ import random
 import requests
 import lxml.etree
 from StringIO import StringIO
-from scihub import scihubber, libgen
+import modules.scihub
 
 import pdfparanoia
 
@@ -136,10 +136,10 @@ def download(phenny, input, verbose=True):
                 phenny.say(download_url(line))
                 continue
         else:
-            pdfurl, doi = scihubber(line, headers={})
+            pdfurl, doi = modules.scihub.scihubber(line, headers={})
             if pdfurl:
                 if str.find(pdfurl, "pdfcache"):
-                    if doi: phenny.say(libgen(pdfurl, doi, headers={}))
+                    if doi: phenny.say(modules.scihub.libgen(pdfurl, doi, headers={}))
                     else: phenny.say(download_url(pdfurl))
                 else: phenny.say(pdfurl)
     return

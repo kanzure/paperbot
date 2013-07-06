@@ -15,9 +15,9 @@ scihub_cookie = os.environ.get("SCIHUB_PASSWORD", None)
 if scihub_cookie == None:
     raise Exception("need SCIHUB_PASSWORD set")
 
-def libgen(url, doi):
+def libgen(url, doi, **kwargs):
     auth_ = requests.auth.HTTPBasicAuth("genesis", "upload")
-    re = requests.get(url)
+    re = requests.get(url, **kwargs)
     payload = "data:application/pdf;base64," + base64.b64encode(re.content)
     re = requests.get("http://libgen.org/scimag/librarian/form.php", auth = auth_,
        files = {"uploadedfile":("derp.pdf", payload)}, data = {"doi": doi})
