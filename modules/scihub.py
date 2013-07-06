@@ -16,7 +16,7 @@ scihub_cookie = os.environ.get("SCIHUB_PASSWORD", None)
 
 if scihub_cookie:
     defcookie = {scihub_cookie: ""}
-else
+else:
     raise Exception("need SCIHUB_PASSWORD set")
 
 def libgen(url, doi, cookies = defcookie, **kwargs):
