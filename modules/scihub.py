@@ -2,6 +2,22 @@ import requests
 from HTMLParser import HTMLParser
 from urlparse import urlparse
 import itertools
+import urllib
+import base64
+
+def libgen(url, doi):
+    auth_ = requests.auth.HTTPBasicAuth("genesis", "upload")
+    re = requests.get(url)
+    payload = "data:application/pdf;base64," + base64.b64encode(re.content)
+    re = requests.get("http://libgen.org/scimag/librarian/form.php", auth = auth_,
+       files = {"uploadedfile":("derp.pdf", payload)}, data = {"doi": doi})
+    formp = []
+    class FormP(HTMLParser):
+        def handle_starttag(self, tag, attr):
+            if tag == "input":
+                d = dict(attr); form.append((d[name], d[value]))
+    re = requests.get("http://libgen.org/scimag/librarian/register.php", data = dict(formp), auth = auth_)
+    return "http://libgen.org/scimag5/" + doi
 
 def scihubber(url, **kwargs):
     """
@@ -29,7 +45,7 @@ def scihubber(url, **kwargs):
                     v = d.get("href","").encode("utf8")
                     if str.find(v, "doi") != -1:
                         ix = str.find(v, "10.")
-                        if ix != -1: justdoi.append(v[ix:])
+                        if ix != -1: justdoi.append(urllib.unquote(v[ix:]))
 
         class MaybeTail(HTMLParser):
             def handle_starttag(self, tag, attrs):
@@ -45,7 +61,6 @@ def scihubber(url, **kwargs):
             
         re = requests.get(_url, **kwargs).text.encode("utf8")
         if not _doi:
-            print "DOI search"
             MaybeDOI().feed(re)
             if justdoi: _doi = justdoi[0]
         MaybeTail().feed(re)
@@ -58,5 +73,6 @@ def scihubber(url, **kwargs):
             itertools.imap(lambda x: _go("http://%s.sci-hub.org/%s" % (a.hostname, x), _doi), qq))
         try: return it.next()
         except StopIteration: return None
-    return _go(geturl)
-
+    ret = _go(geturl)
+    if ret: return ret
+    else: return (None, None)

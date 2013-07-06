@@ -135,18 +135,15 @@ def download(phenny, input, verbose=True):
             elif verbose and explicit:
                 phenny.say(download_url(line))
                 continue
-        elif verbose and explicit:
-            if response.status_code == 501:
-                if verbose:
-                    phenny.say("no translator available, raw dump: " + download_url(line))
-                    continue
-            else:
-                if verbose:
-                    phenny.say("error: HTTP " + str(response.status_code) + " " + download_url(line))
-                    continue
         else:
-            continue
+            pdfurl, doi = scihubber(line, headers={})
+            if pdfurl:
+                if str.find(pdfurl, "pdfcache"):
+                    if doi: phenny.say(libgen(pdfurl, doi, headers={}))
+                    else: phenny.say(download_url(pdfurl))
+                else: phenny.say(pdfurl)
     return
+
 download.commands = ["fetch", "get", "download"]
 download.priority = "high"
 download.rule = r'(.*)'
