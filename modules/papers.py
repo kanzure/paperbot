@@ -136,12 +136,13 @@ def download(phenny, input, verbose=True):
                 phenny.say(download_url(line))
                 continue
         else:
-            pdfurl, doi = modules.scihub.scihubber(line, headers={})
+            pdfurl, doi = modules.scihub.scihubber(line)
             if pdfurl:
                 if str.find(pdfurl, "pdfcache"):
-                    if doi: phenny.say(modules.scihub.libgen(pdfurl, doi, headers={}))
-                    else: phenny.say(download_url(pdfurl))
+                    if doi: phenny.say(modules.scihub.libgen(pdfurl, doi))
+                    else: phenny.say(download_url(pdfurl, cookies=modules.scihub.defcookie))
                 else: phenny.say(pdfurl)
+            else: pheny.say(download_url(line))
     return
 
 download.commands = ["fetch", "get", "download"]
@@ -158,8 +159,8 @@ def download_ieee(url):
     # url = "http://ieeexplore.ieee.org/iel5/27/19498/00901261.pdf?arnumber=901261"
     raise NotImplementedError
 
-def download_url(url):
-    response = requests.get(url, headers={"User-Agent": "origami-pdf"})
+def download_url(url, **kwargs):
+    response = requests.get(url, headers={"User-Agent": "origami-pdf"}, **kwargs)
     content = response.content
 
     # just make up a default filename
