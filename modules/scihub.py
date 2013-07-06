@@ -53,9 +53,8 @@ def scihubber(url, **kwargs):
                 _doi = maybedoi[0][ix:]
         just = map(lambda x:x.get("src"), shu.xpath("//frame[@name='_pdf']"))
         if just: return (just[0], _doi)
-        derp = map(lambda x:x.get("src"), shu.xpath("//frame | //iframe"))
-        derp += map(lambda x:x.get("href"), shu.xpath("//a"))
-        derp = filter(None,derp)
+        derp = map(lambda x:x.get("src"), shu.xpath("(//frame | //iframe)[contains(@src,'pdf')]"))
+        derp += map(lambda x:x.get("href"), shu.xpath("//a[contains(@href,'pdf')]"))
         it = itertools.ifilter(None,
             itertools.imap(lambda x: _go("http://%s.sci-hub.org/%s" % (a.hostname, x), _doi), derp))
         try: return it.next()
