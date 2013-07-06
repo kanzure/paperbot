@@ -8,7 +8,7 @@ import random
 import requests
 import lxml.etree
 from StringIO import StringIO
-from scihub import scihubber
+from scihub import scihubber, libgen
 
 import pdfparanoia
 
