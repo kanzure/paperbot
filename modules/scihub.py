@@ -6,6 +6,8 @@ import requests
 from HTMLParser import HTMLParser
 from urlparse import urlparse
 import itertools
+from lxml import etree
+from StringIO import StringIO
 import urllib
 import base64
 import os
@@ -21,14 +23,11 @@ def libgen(url, doi, **kwargs):
     auth_ = requests.auth.HTTPBasicAuth("genesis", "upload")
     re = requests.get(url, **kwargs)
     payload = "data:application/pdf;base64," + base64.b64encode(re.content)
-    re = requests.get("http://libgen.org/scimag/librarian/form.php", auth = auth_,
-       files = {"uploadedfile":("derp.pdf", payload)}, data = {"doi": doi})
-    formp = []
-    class FormP(HTMLParser):
-        def handle_starttag(self, tag, attr):
-            if tag == "input":
-                d = dict(attr); form.append((d[name], d[value]))
-    re = requests.get("http://libgen.org/scimag/librarian/register.php", data = dict(formp), auth = auth_)
+    re = requests.post("http://libgen.org/scimag/librarian/form.php", auth = auth_,
+       files = {"uploadedfile":("derp.pdf", re.content)}, data = {"doi": doi})
+    shu = etree.parse(StringIO(re.text), etree.HTMLParser())
+    formp = dict(map(lambda x: (x.get("name"), x.get("value")), tr.xpath("//input[@name]")))
+    re = requests.get("http://libgen.org/scimag/librarian/register.php", data = formp, auth = auth_)
     return "http://libgen.org/scimag5/" + doi
 
 def scihubber(url, **kwargs):
@@ -43,26 +42,6 @@ def scihubber(url, **kwargs):
     a = urlparse(url)
     geturl = "http://%s.sci-hub.org/%s?%s" % (a.hostname, a.path, a.query)
     def _go(_url, _doi = None):
-        _as = []
-        _frames = []
-        just = []
-        justdoi = []
-
-        class MaybeDOI(HTMLParser):
-            def handle_starttag(self, tag, attrs):
-                if tag == "meta":
-                    d = dict(attrs)
-                    if str.find(d.get("name","").encode("utf8"), "doi") != -1:
-                        v = d.get("content","").encode("utf8")
-                        ix = str.find(v, "10.")
-                        if ix != -1: justdoi.append(v[ix:])
-                if tag == "a":
-                    d = dict(attrs)
-                    v = d.get("href","").encode("utf8")
-                    if str.find(v, "doi") != -1:
-                        ix = str.find(v, "10.")
-                        if ix != -1: justdoi.append(urllib.unquote(v[ix:]))
-
         class MaybeTail(HTMLParser):
             def handle_starttag(self, tag, attrs):
                 if tag == "frame":
@@ -75,17 +54,21 @@ def scihubber(url, **kwargs):
                 elif tag == "frame" or tag == "iframe": _frames.append(dict(attrs))
 
         re = requests.get(_url, **kwargs).text.encode("utf8")
+        shu = etree.parse(StringIO(re.text),etree.HTMLParser())
         if not _doi:
-            MaybeDOI().feed(re)
-            if justdoi: _doi = justdoi[0]
-        MaybeTail().feed(re)
+            metas = map(lambda x:x.get("content"), shu.xpath("//meta[contains(@name,'doi')]"))
+            _as = map(lambda x:urllib.unquote(x.get("href")), shu.xpath("//a[contains(@href,'doi')]"))
+            maybedoi = filter(lambda x:str.find(x, "10.") != -1, metas + _as)
+            if maybedoi:
+                ix = str.find(maybedoi[0],"10.")
+                _doi = maybedoi[0][ix:]
+        just = map(lambda x:x.get("src"), shu.xpath("//frame[@name='_pdf']"))
         if just: return (just[0], _doi)
-        Derper().feed(re)
-        qq = filter(lambda x: str.find(x.get("href","").encode("utf8"), "pdf") != -1, _as)
-        qq += filter(lambda x: str.find(x.get("src","").encode("utf8"), "pdf") != -1, _frames)
-        qq = filter(None, map(lambda x: x.get("href", x.get("src", None)), qq))
+        derp = map(lambda x:x.get("src"), shu.xpath("//frame | //iframe"))
+        derp += map(lambda x:x.get("href"), shu.xpath("//a"))
+        derp = filter(None,derp)
         it = itertools.ifilter(None,
-            itertools.imap(lambda x: _go("http://%s.sci-hub.org/%s" % (a.hostname, x), _doi), qq))
+            itertools.imap(lambda x: _go("http://%s.sci-hub.org/%s" % (a.hostname, x), _doi), derp))
         try: return it.next()
         except StopIteration: return None
     ret = _go(geturl)
