@@ -142,7 +142,7 @@ def download(phenny, input, verbose=True):
                     if doi: phenny.say(modules.scihub.libgen(pdfurl, doi))
                     else: phenny.say(download_url(pdfurl, cookies=modules.scihub.defcookie))
                 else: phenny.say(pdfurl)
-            else: pheny.say(download_url(line))
+            else: phenny.say(download_url(line))
     return
 
 download.commands = ["fetch", "get", "download"]
