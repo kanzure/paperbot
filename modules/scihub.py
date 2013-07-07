@@ -3,23 +3,28 @@ Integration with http://sci-hub.org/
 """
 
 import requests
-from HTMLParser import HTMLParser
 from urlparse import urlparse
 import itertools
 from lxml import etree
 from StringIO import StringIO
-import urllib
-import base64
 import os
 
 scihub_cookie = os.environ.get("SCIHUB_PASSWORD", None)
-
 if scihub_cookie:
-    defcookie = {scihub_cookie: ""}
+    shcookie = {scihub_cookie: ""}
 else:
     raise Exception("need SCIHUB_PASSWORD set")
 
-def libgen(url, doi, cookies = defcookie, **kwargs):
+
+def cookie(fn):
+    def _fn(*ar, **kw):
+        if "cookies" not in kw: kw["cookies"] = shcookie
+        elif scihub_cookie not in kw["cookies"]: kw["cookies"].update(shcookie)
+        return fn(*ar, **kw)
+    return _fn
+
+@cookie
+def libgen(url, doi, **kwargs):
     auth_ = requests.auth.HTTPBasicAuth("genesis", "upload")
     re = requests.get(url, **kwargs)
     re = requests.post("http://libgen.org/scimag/librarian/form.php", auth = auth_,
@@ -29,7 +34,8 @@ def libgen(url, doi, cookies = defcookie, **kwargs):
     re = requests.get("http://libgen.org/scimag/librarian/register.php", data = formp, auth = auth_)
     return "http://libgen.org/scimag5/" + doi
 
-def scihubber(url, cookies = defcookie, **kwargs):
+@cookie
+def scihubber(url, **kwargs):
     """
     Takes user url and traverses sci-hub proxy system until pdf is found.
     When successful, returns either sci-hub pdfcache or libgen pdf url
