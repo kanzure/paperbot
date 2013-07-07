@@ -135,12 +135,12 @@ def download(phenny, input, verbose=True):
             elif verbose and explicit:
                 phenny.say(download_url(line))
                 continue
-        else:
+        elif verbose and explicit:
             pdfurl, doi = modules.scihub.scihubber(line)
             if pdfurl:
                 if str.find(pdfurl, "pdfcache"):
                     if doi: phenny.say(modules.scihub.libgen(pdfurl, doi))
-                    else: phenny.say(download_url(pdfurl, cookies=modules.scihub.defcookie))
+                    else: phenny.say(download_url(pdfurl, cookies=modules.scihub.shcookie))
                 else: phenny.say(pdfurl)
             else: pheny.say(download_url(line))
     return

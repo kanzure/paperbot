@@ -9,16 +9,19 @@ from lxml import etree
 from StringIO import StringIO
 import os
 
+scihub_cookie = os.environ.get("SCIHUB_PASSWORD", None)
+if scihub_cookie:
+    shcookie = {scihub_cookie: ""}
+else:
+    raise Exception("need SCIHUB_PASSWORD set")
+
+
 def cookie(fn):
-    scihub_cookie = os.environ.get("SCIHUB_PASSWORD", None)
-    if scihub_cookie:
-        def _fn(**kw):
-            if "cookies" not in kw: kw["cookies"] = {scihub_cookie: ""}
-            elif scihub_cookie not in kw["cookies"]: kw["cookies"]["scihub_cookie"] = ""
-            return fn(**kw)
-        return _fn
-    else:
-        raise Exception("need SCIHUB_PASSWORD set")
+    def _fn(*ar, **kw):
+        if "cookies" not in kw: kw["cookies"] = shcookie
+        elif scihub_cookie not in kw["cookies"]: kw["cookies"].update(shcookie)
+        return fn(*ar, **kw)
+    return _fn
 
 @cookie
 def libgen(url, doi, **kwargs):
