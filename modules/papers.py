@@ -9,6 +9,7 @@ import requests
 import lxml.etree
 from StringIO import StringIO
 import modules.scihub
+import urllib
 
 import pdfparanoia
 
@@ -72,6 +73,13 @@ def download(phenny, input, verbose=True):
             item = content[0]
             title = item["title"]
 
+            if item.has_key("DOI"):
+                lgre = requests.post("http://libgen.org/scimag/librarian/form.php", data={"doi":item["DOI"])
+                tree = parse_html(lgre.content)
+                if tree.xpath("//h1")[0].text != "No file selected":
+                    phenny.say("http://libgen.org/scimag/get.php?doi=%s" % urllib.quote_plus(item["DOI"]))
+                    return
+
             if item.has_key("attachments"):
                 pdf_url = None
                 for attachment in item["attachments"]:
@@ -93,12 +101,17 @@ def download(phenny, input, verbose=True):
                         response = requests.get(pdf_url, headers=headers)
 
                     # detect failure
-                    if response.status_code == 401:
-                        phenny.say("HTTP 401 unauthorized " + str(pdf_url))
-                        continue
-                    elif response.status_code != 200:
-                        phenny.say("HTTP " + str(response.status_code) + " " + str(pdf_url))
-                        continue
+                    if response.status_code != 200:
+                        shurl, _ = modules.scihub.scihubber(pdf_url)
+                        if shurl:
+                            if "libgen" in shurl:
+                                phenny.say("http://libgen.org/scimag/get.php?doi=%s" % urllib.quote_plus(item["DOI"]))
+                            elif "pdfcache" not in shurl:
+                                phenny.say(shurl)
+                            else:
+                                modules.scihub.libgen(modules.scihub.scihub_dl(shurl), item["DOI"])
+                                phenny.say("http://libgen.org/scimag/get.php?doi=%s" % urllib.quote_plus(item["DOI"]))
+                        return
 
                     data = response.content
 
@@ -108,6 +121,10 @@ def download(phenny, input, verbose=True):
                         except:
                             # this is to avoid a PDFNotImplementedError
                             pass
+
+                    if item.has_key("DOI"):
+                        phenny.say(modules.scihub.libgen(data, item["DOI"]))
+                        return
 
                     # grr..
                     title = title.encode("ascii", "ignore")
@@ -130,19 +147,20 @@ def download(phenny, input, verbose=True):
                     phenny.say(url)
                     continue
                 elif verbose and explicit:
-                    phenny.say(download_url(line))
+                    shurl, doi = modules.scihub.scihubber(line)
                     continue
             elif verbose and explicit:
+                shurl, doi = modules.scihub.scihubber(line)
                 phenny.say(download_url(line))
                 continue
         elif verbose and explicit:
-            pdfurl, doi = modules.scihub.scihubber(line)
-            if pdfurl:
-                if str.find(pdfurl, "pdfcache"):
-                    if doi: phenny.say(modules.scihub.libgen(pdfurl, doi))
-                    else: phenny.say(download_url(pdfurl, cookies=modules.scihub.shcookie))
-                else: phenny.say(pdfurl)
-            else: phenny.say(download_url(line))
+            shurl, doi = modules.scihub.scihubber(line)
+        if pdfurl:
+            if "pdfcache" in shurl:
+                if doi: phenny.say(modules.scihub.libgen(modules.scihub.scihub_dl(shurl), doi))
+                else: phenny.say(download_url(pdfurl, cookies=modules.scihub.shcookie))
+            else: phenny.say(pdfurl)
+        else: phenny.say(download_url(line))
     return
 
 download.commands = ["fetch", "get", "download"]
