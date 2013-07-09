@@ -109,8 +109,7 @@ def download(phenny, input, verbose=True):
                             elif "pdfcache" not in shurl:
                                 phenny.say(shurl)
                             else:
-                                modules.scihub.libgen(modules.scihub.scihub_dl(shurl), item["DOI"])
-                                phenny.say("http://libgen.org/scimag/get.php?doi=%s" % urllib.quote_plus(item["DOI"]))
+                                phenny.say(modules.scihub.libgen(modules.scihub.scihub_dl(shurl), item["DOI"]))
                         return
 
                     data = response.content
