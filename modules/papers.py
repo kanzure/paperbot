@@ -14,15 +14,15 @@ import urllib
 import pdfparanoia
 
 logchannel = os.environ.get("LOGGING", None)
-if logchannel:
-    _log = lambda x: phenny.msg("#%s" % logchannel, x)
-else:
-    _log = lambda x: None
 
 def download(phenny, input, verbose=True):
     """
     Downloads a paper.
     """
+    if logchannel:
+        _log = lambda x: phenny.msg("#%s" % logchannel, x)
+    else:
+        _log = lambda x: None
     # only accept requests in a channel
     if not input.sender.startswith('#'):
         # unless the user is an admin, of course
