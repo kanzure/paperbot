@@ -74,7 +74,7 @@ def download(phenny, input, verbose=True):
             title = item["title"]
 
             if item.has_key("DOI"):
-                lgre = requests.post("http://libgen.org/scimag/librarian/form.php", data={"doi":item["DOI"])
+                lgre = requests.post("http://libgen.org/scimag/librarian/form.php", data={"doi":item["DOI"]})
                 tree = parse_html(lgre.content)
                 if tree.xpath("//h1")[0].text != "No file selected":
                     phenny.say("http://libgen.org/scimag/get.php?doi=%s" % urllib.quote_plus(item["DOI"]))
