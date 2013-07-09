@@ -13,6 +13,12 @@ import urllib
 
 import pdfparanoia
 
+logchannel = os.environ.get("LOGGING", None)
+if logchannel:
+    _log = lambda x: phenny.msg("#%s" % logchannel, x)
+else:
+    _log = lambda x: None
+
 def download(phenny, input, verbose=True):
     """
     Downloads a paper.
@@ -77,6 +83,7 @@ def download(phenny, input, verbose=True):
             title = item["title"]
 
             if item.has_key("DOI"):
+                _log("Translator DOI")
                 lgre = requests.post("http://libgen.org/scimag/librarian/form.php", data={"doi":item["DOI"]})
                 tree = parse_html(lgre.content)
                 if tree.xpath("//h1")[0].text != "No file selected":
@@ -149,20 +156,25 @@ def download(phenny, input, verbose=True):
                     phenny.say(url)
                     continue
                 elif verbose and explicit:
+                    _log("Translation server PDF fail")
                     shurl, doi = modules.scihub.scihubber(line)
                     continue
             elif verbose and explicit:
+                _log("Translation server PDF fail")
                 shurl, doi = modules.scihub.scihubber(line)
                 phenny.say(download_url(line))
                 continue
         elif verbose and explicit:
+            _log("Translation server fail")
             shurl, doi = modules.scihub.scihubber(line)
+            _log("Scihubber -> (%s, %s)" % (shurl, doi))
         if shurl:
             if "pdfcache" in shurl:
                 if doi: phenny.say(modules.scihub.libgen(modules.scihub.scihub_dl(shurl), doi))
                 else: phenny.say(download_url(shurl, cookies=modules.scihub.shcookie))
             else: phenny.say(shurl)
         elif verbose and explicit:
+            _log("All approaches failed")
             phenny.say(download_url(line))
     return
 
