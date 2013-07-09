@@ -14,6 +14,11 @@ All content is scraped using [zotero/translators](https://github.com/zotero/tran
 * [phenny](https://github.com/sbp/phenny)
 * [pdfparanoia](https://github.com/kanzure/pdfparanoia)
 
+Environment variables:
+
+* SCIHUB_PASSWORD - must be set to SciHub cookie
+* LOGGING - optional: bot spams logs to "#"$LOGGING
+
 <div id="todo" />
 ## TODO
 
