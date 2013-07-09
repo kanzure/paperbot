@@ -46,6 +46,9 @@ def download(phenny, input, verbose=True):
     if len(line) < 5 or (not "http://" in line and not "https://" in line) or not line.startswith("http"):
         return
     for line in re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', line):
+        # fix an UnboundLocalError problem
+        shurl = None
+
         line = filter_fix(line)
 
         # fix for login.jsp links to ieee xplore
