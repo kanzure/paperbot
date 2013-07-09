@@ -29,7 +29,7 @@ def libgen(pdfstr, doi, **kwargs):
     re = requests.post("http://libgen.org/scimag/librarian/form.php", auth = auth_,
        files = {"uploadedfile":("derp.pdf", pdfstr)}, data = {"doi": doi})
     shu = etree.parse(StringIO(re.text), etree.HTMLParser())
-    formp = dict(map(lambda x: (x.get("name"), x.get("value")), tr.xpath("//input[@name]")))
+    formp = dict(map(lambda x: (x.get("name"), x.get("value")), shu.xpath("//input[@name]")))
     re = requests.get("http://libgen.org/scimag/librarian/register.php", data = formp, auth = auth_)
     return "http://libgen.org/scimag/get.php?doi=" + urllib.quote_plus(item["DOI"])
 
