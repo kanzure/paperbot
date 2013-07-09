@@ -162,7 +162,8 @@ def download(phenny, input, verbose=True):
                 if doi: phenny.say(modules.scihub.libgen(modules.scihub.scihub_dl(shurl), doi))
                 else: phenny.say(download_url(shurl, cookies=modules.scihub.shcookie))
             else: phenny.say(shurl)
-        else: phenny.say(download_url(line))
+        elif verbose and explicit:
+            phenny.say(download_url(line))
     return
 
 download.commands = ["fetch", "get", "download"]
