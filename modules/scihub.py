@@ -7,6 +7,7 @@ from urlparse import urlparse
 import itertools
 from lxml import etree
 from StringIO import StringIO
+import urllib
 import os
 
 scihub_cookie = os.environ.get("SCIHUB_PASSWORD", None)
@@ -23,16 +24,19 @@ def cookie(fn):
         return fn(*ar, **kw)
     return _fn
 
-@cookie
-def libgen(url, doi, **kwargs):
+def libgen(pdfstr, doi, **kwargs):
     auth_ = requests.auth.HTTPBasicAuth("genesis", "upload")
-    re = requests.get(url, **kwargs)
     re = requests.post("http://libgen.org/scimag/librarian/form.php", auth = auth_,
-       files = {"uploadedfile":("derp.pdf", re.content)}, data = {"doi": doi})
+       files = {"uploadedfile":("derp.pdf", pdfstr)}, data = {"doi": doi})
     shu = etree.parse(StringIO(re.text), etree.HTMLParser())
     formp = dict(map(lambda x: (x.get("name"), x.get("value")), tr.xpath("//input[@name]")))
     re = requests.get("http://libgen.org/scimag/librarian/register.php", data = formp, auth = auth_)
-    return "http://libgen.org/scimag5/" + doi
+    return "http://libgen.org/scimag/get.php?doi=" + urllib.quote_plus(item["DOI"])
+
+@cookie
+def scihub_dl(url, **kwargs):
+    re = requests.get(url, **kwargs)
+    return re.content
 
 @cookie
 def scihubber(url, **kwargs):
