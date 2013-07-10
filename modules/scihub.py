@@ -31,7 +31,7 @@ def libgen(pdfstr, doi, **kwargs):
     shu = etree.parse(StringIO(re.text), etree.HTMLParser())
     formp = dict(map(lambda x: (x.get("name"), x.get("value")), shu.xpath("//input[@name]")))
     re = requests.get("http://libgen.org/scimag/librarian/register.php", data = formp, auth = auth_)
-    return "http://libgen.org/scimag/get.php?doi=" + urllib.quote_plus(item["DOI"])
+    return "http://libgen.org/scimag/get.php?doi=" + urllib.quote_plus(doi)
 
 @cookie
 def scihub_dl(url, **kwargs):
