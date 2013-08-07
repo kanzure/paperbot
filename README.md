@@ -2,6 +2,8 @@
 
 Paperbot is an IRC bot that fetches academic papers. It monitors all conversation for links to scholarly content, then fetches the content and posts a public link. This seems to help enhance the quality of discussion and make us less ignorant. When a link fails to lead to a pdf with the zotero translators, paperbot will not attempt further downloads of the paper unless paperbot was specifically spoken to.
 
+<img src="http://diyhpl.us/~bryan/images/projects/paperbot.png" />
+
 <div id="details" />
 <div id="deets" />
 ## deets
