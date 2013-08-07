@@ -17,7 +17,7 @@ All content is scraped using [zotero/translators](https://github.com/zotero/tran
 Environment variables:
 
 * SCIHUB\_PASSWORD - must be set to SciHub cookie
-* LOGGING - optional: bot spams logs to "#"$LOGGING
+* LOGGING - optional: bot spams logs to a channel defined as "#" plus the value of LOGGING
 
 <div id="todo" />
 ## TODO
