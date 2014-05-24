@@ -10,6 +10,13 @@ from StringIO import StringIO
 import urllib
 import os
 
+with open('libgen_login.txt') as f:
+    libgen_creds = dict()
+    for x in f.readlines():
+        line = x.strip()
+        libgen_creds[line.split(":")[0]] = line.split(":")[1]
+
+
 scihub_cookie = os.environ.get("SCIHUB_PASSWORD", None)
 if scihub_cookie:
     shcookie = {scihub_cookie: ""}
@@ -31,7 +38,7 @@ def libgen(pdfstr, doi, **kwargs):
         return "http://libgen.org/scimag/get.php?doi=" + urllib.quote_plus(doi)
 
     # Build login auth
-    auth_ = requests.auth.HTTPBasicAuth("genesis", "upload")
+    auth_ = requests.auth.HTTPBasicAuth( libgen_creds['username'], libgen_creds['password'] )
 
     # Fill in form-work with file and DOI
     re = requests.post("http://libgen.org/scimag/librarian/form.php", auth = auth_,
