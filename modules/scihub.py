@@ -66,7 +66,11 @@ def scihubber(url, **kwargs):
     a = urlparse(url)
     geturl = "http://%s.sci-hub.org/%s?%s" % (a.hostname, a.path, a.query)
     def _go(_url, _doi = None):
-        re = requests.get(_url, **kwargs).text.encode("utf8")
+        try:
+            re = requests.get(_url, **kwargs).text.encode("utf8")
+        except Exception as exception:
+            return None
+        if not re.text: return None
         shu = etree.parse(StringIO(re),etree.HTMLParser())
         if not _doi:
             metas = map(lambda x:x.get("content"), shu.xpath("//meta[contains(@name,'doi')]"))
