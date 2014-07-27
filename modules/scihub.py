@@ -70,7 +70,7 @@ def scihubber(url, **kwargs):
             re = requests.get(_url, **kwargs).text.encode("utf8")
         except Exception as exception:
             return None
-        if not re.text: return None
+        if not re: return None
         shu = etree.parse(StringIO(re),etree.HTMLParser())
         if not _doi:
             metas = map(lambda x:x.get("content"), shu.xpath("//meta[contains(@name,'doi')]"))
