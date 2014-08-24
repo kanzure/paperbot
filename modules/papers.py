@@ -326,6 +326,7 @@ def download_url(url, **kwargs):
                 title = citation_title
         else:
             if "sciencedirect.com" in url and not "ShoppingCart" in url:
+                _log('download_url got a sciencedirect URL')
                 try:
                     title = tree.xpath("//h1[@class='svTitle']")[0].text
                     pdf_url = tree.xpath("//a[@id='pdfLink']/@href")[0]
