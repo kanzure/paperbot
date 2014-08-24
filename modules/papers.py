@@ -152,7 +152,7 @@ def download(phenny, input, verbose=True):
                             try:
                                 data = pdfparanoia.scrub(StringIO(data))
                                 try:
-                                    logchannel('after pdfparanoia.scrub')
+                                    _log('after pdfparanoia.scrub')
                                     requests.get('http://localhost:8500/remoteprint', headers={'msg':'after pdfparanoia.scrub'})
                                 except:
                                     pass
