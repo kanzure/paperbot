@@ -338,7 +338,8 @@ def download_url(url, _log=nullLog, **kwargs):
                     new_content = new_response.content
                     if "pdf" in new_response.headers["content-type"]:
                         extension = ".pdf"
-                except Exception:
+                except Exception as e:
+                    _log(str(e))
                     pass
                 else:
                     content = new_content
