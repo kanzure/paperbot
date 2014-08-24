@@ -104,7 +104,7 @@ def download(phenny, input, verbose=True):
 
                     proxies_left_to_try = len(proxy_list)
                     request_iteration = 0
-                    _log('before while proxies_left_to_try')
+                    phenny.say('before while proxies_left_to_try')
                     while proxies_left_to_try:
                         headers = {
                             "User-Agent": user_agent,
@@ -112,7 +112,7 @@ def download(phenny, input, verbose=True):
                         response = None
                         proxy_url = proxy_list[proxy_url_index]['proxy_url']
                         proxy_type = proxy_list[proxy_url_index]['proxy_type']
-                        _log('proxies_left_to_try: %d' % proxies_left_to_try)
+                        phenny.say('proxies_left_to_try: %d' % proxies_left_to_try)
                         #perform default behaviour if proxy is None
                         if proxy_list[proxy_url_index]['proxy_url'] is None:
                             if pdf_url.startswith("https://"):
@@ -153,7 +153,7 @@ def download(phenny, input, verbose=True):
                             try:
                                 data = pdfparanoia.scrub(StringIO(data))
                                 try:
-                                    _log('after pdfparanoia.scrub')
+                                    phenny.say('after pdfparanoia.scrub')
                                     requests.get('http://localhost:8500/remoteprint', headers={'msg':'after pdfparanoia.scrub'})
                                 except:
                                     pass
