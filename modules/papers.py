@@ -20,6 +20,7 @@ def nullLog(msg):
     pass
 
 class paperbot_proxy_request(object):
+    _log=nullLog
     @classmethod
     def get(*args, **kwargs):
         proxies_left_to_try = len(proxy_list)
@@ -332,6 +333,7 @@ def download_url(url, _log=nullLog, **kwargs):
                 try:
                     title = tree.xpath("//h1[@class='svTitle']")[0].text
                     pdf_url = tree.xpath("//a[@id='pdfLink']/@href")[0]
+                    paperbot_proxy_request._log = _log
                     new_response = paperbot_proxy_request.get(pdf_url, headers={"User-Agent": "sdf-macross"})
                     new_content = new_response.content
                     if "pdf" in new_response.headers["content-type"]:
