@@ -17,6 +17,59 @@ logchannel = os.environ.get("LOGGING", None)
 proxy_list = [  {'proxy_url':None,'proxy_type':'normal'},
                 {'proxy_url':'http://localhost:8500/plsget', 'proxy_type':'custom_flask_json'} ]
 
+class paperbot_proxy_request(object):
+    @classmethod
+    def get(*args, **kwargs):
+        proxies_left_to_try = len(proxy_list)
+        extension = ".txt"
+        request_iteration = 0
+        _log('before while proxies_left_to_try')
+        while proxies_left_to_try:
+            proxy_url = proxy_list[proxy_url_index]['proxy_url']
+            proxy_type = proxy_list[proxy_url_index]['proxy_type']
+            _log('proxies_left_to_try: %d' % proxies_left_to_try)
+            #perform default behaviour if proxy is None
+            if proxy_list[proxy_url_index]['proxy_url'] is None:
+                if pdf_url.startswith("https://"):
+                    response = requests.get(args, kwargs, verify=False)
+                else:
+                    response = requests.get(args, kwargs)
+            else:
+                #check type of proxy
+                if proxy_type == 'custom_flask_json':
+                    headers['pdf_url'] = pdf_url
+                    headers['request_iteration'] = request_iteration
+                    headers['headers'] = kwargs.get('headers', None)
+                    request_iteration+=1
+                    response = requests.get(proxy_url, headers=headers)
+                elif proxy_type == 'normal':
+                    #i'm not even checking if http or https is in the pdf_url, since the default proxy of None is already being tried in this loop
+                    proxies = { 
+                      "http": proxy_url,
+                      "https": proxy_url,
+                    }
+                    headers = kwargs.get('headers', None)
+                    #I don't know if passing None or {} for headers is bad, so I put this if:
+                    if headers is not None:
+                        response = requests.get(pdf_url, headers=headers, proxies=proxies)
+                    else:
+                        response = requests.get(pdf_url, proxies=proxies)
+
+            if "pdf" in response.headers["content-type"]:
+                extension = ".pdf"
+                return response, extension
+
+            if 'proxies_remaining' in response.headers:
+                #decrement the index if the custom proxy doesn't have any more internal proxies to try
+                if response.headers['proxies_remaining'] == 0:
+                    proxies_left_to_try-=1
+                    request_iteration=0
+            else:    
+                #decrement the index to move on to the next proxy in our proxy_list
+                proxies_left_to_try-=1
+
+        return response, extension
+
 def download(phenny, input, verbose=True):
     """
     Downloads a paper.
@@ -276,7 +329,7 @@ def download_url(url, **kwargs):
                 try:
                     title = tree.xpath("//h1[@class='svTitle']")[0].text
                     pdf_url = tree.xpath("//a[@id='pdfLink']/@href")[0]
-                    new_response = requests.get(pdf_url, headers={"User-Agent": "sdf-macross"})
+                    new_response = paperbot_proxy_request.get(pdf_url, headers={"User-Agent": "sdf-macross"})
                     new_content = new_response.content
                     if "pdf" in new_response.headers["content-type"]:
                         extension = ".pdf"
