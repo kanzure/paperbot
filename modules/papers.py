@@ -10,6 +10,7 @@ import lxml.etree
 from StringIO import StringIO
 import modules.scihub
 import urllib
+import traceback 
 
 import pdfparanoia
 
@@ -339,7 +340,7 @@ def download_url(url, _log=nullLog, **kwargs):
                     if "pdf" in new_response.headers["content-type"]:
                         extension = ".pdf"
                 except Exception as e:
-                    _log(str(e))
+                    _log(traceback.format_exc())
                     pass
                 else:
                     content = new_content
