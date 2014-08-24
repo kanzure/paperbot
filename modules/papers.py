@@ -14,6 +14,8 @@ import urllib
 import pdfparanoia
 
 logchannel = os.environ.get("LOGGING", None)
+proxy_list = [  {'proxy_url':None,'proxy_type':'normal'},
+                {'proxy_url':'http://localhost:8500/plsget', 'proxy_type':'custom_flask_json'} ]
 
 def download(phenny, input, verbose=True):
     """
@@ -100,36 +102,67 @@ def download(phenny, input, verbose=True):
                 if pdf_url:
                     user_agent = "Mozilla/5.0 (X11; Linux i686 (x86_64)) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11"
 
-                    headers = {
-                        "User-Agent": user_agent,
-                    }
+                    proxies_left_to_try = len(proxy_list)
+                    request_iteration = 0
+                    while proxies_left_to_try:
+                        headers = {
+                            "User-Agent": user_agent,
+                        }
+                        response = None
+                        proxy_url = proxy_list[proxy_url_index]['proxy_url']
+                        proxy_type = proxy_list[proxy_url_index]['proxy_type']
 
-                    response = None
-                    if pdf_url.startswith("https://"):
-                        response = requests.get(pdf_url, headers=headers, verify=False)
-                    else:
-                        response = requests.get(pdf_url, headers=headers)
-
-                    # detect failure
-                    if response.status_code != 200:
-                        shurl, _ = modules.scihub.scihubber(pdf_url)
-                        if shurl:
-                            if "libgen" in shurl:
-                                phenny.say("http://libgen.org/scimag/get.php?doi=%s" % urllib.quote_plus(item["DOI"]))
-                            elif "pdfcache" not in shurl:
-                                phenny.say(shurl)
+                        #perform default behaviour if proxy is None
+                        if proxy_list[proxy_url_index]['proxy_url'] is None:
+                            if pdf_url.startswith("https://"):
+                                response = requests.get(pdf_url, headers=headers, verify=False)
                             else:
-                                phenny.say(modules.scihub.libgen(modules.scihub.scihub_dl(shurl), item["DOI"]))
-                        return
+                                response = requests.get(pdf_url, headers=headers)
+                        else:
 
-                    data = response.content
+                            #check type of proxy
+                            if proxy_type == 'custom_flask_json':
+                                headers['pdf_url'] = pdf_url
+                                headers['request_iteration'] = request_iteration
+                                response = requests.get(proxy_url, headers=headers)
+                            elif proxy_type == 'normal':
+                                #i'm not even checking if http or https is in the pdf_url, since the default proxy of None is already being tried in this loop
+                                proxies = { 
+                                  "http": proxy_url,
+                                  "https": proxy_url,
+                                }
+                                response = requests.get(pdf_url, headers=headers, proxies=proxies)
 
-                    if "pdf" in response.headers["content-type"]:
-                        try:
-                            data = pdfparanoia.scrub(StringIO(data))
-                        except:
-                            # this is to avoid a PDFNotImplementedError
-                            pass
+                        # detect failure
+                        if response.status_code != 200:
+                            shurl, _ = modules.scihub.scihubber(pdf_url)
+                            if shurl:
+                                if "libgen" in shurl:
+                                    phenny.say("http://libgen.org/scimag/get.php?doi=%s" % urllib.quote_plus(item["DOI"]))
+                                elif "pdfcache" not in shurl:
+                                    phenny.say(shurl)
+                                else:
+                                    phenny.say(modules.scihub.libgen(modules.scihub.scihub_dl(shurl), item["DOI"]))
+                            return
+
+                        data = response.content
+
+                        if "pdf" in response.headers["content-type"]:
+                            try:
+                                data = pdfparanoia.scrub(StringIO(data))
+                                break
+                            except:
+                                #check for custom_flask_json proxy response, which indicates if the given custom proxy has more internal proxies to try with
+                                if 'proxies_remaining' in response.headers:
+                                    #decrement the index if the custom proxy doesn't have any more internal proxies to try
+                                    if response.headers['proxies_remaining'] == 0:
+                                        proxies_left_to_try-=1    
+                                else:    
+                                    #decrement the index to move on to the next proxy in our proxy_list
+                                    proxies_left_to_try-=1
+
+                                # this is to avoid a PDFNotImplementedError
+                                pass
 
                     if item.has_key("DOI"):
                         phenny.say(modules.scihub.libgen(data, item["DOI"]))
