@@ -332,8 +332,12 @@ def download_url(url, _log=nullLog, **kwargs):
             if "sciencedirect.com" in url and not "ShoppingCart" in url:
                 _log('download_url got a sciencedirect URL')
                 try:
-                    title = tree.xpath("//h1[@class='svTitle']")[0].text
-                    pdf_url = tree.xpath("//a[@id='pdfLink']/@href")[0]
+                    try:
+                        title = tree.xpath("//h1[@class='svTitle']")[0].text
+                        pdf_url = tree.xpath("//a[@id='pdfLink']/@href")[0]
+                    except IndexError: 
+                        title = tree.xpath("//title")[0].text
+                        pdf_url = tree.xpath("//a[@id='pdfLink']/@href")[0]
                     paperbot_proxy_request._log = _log
                     new_response = paperbot_proxy_request.get(pdf_url, headers={"User-Agent": "sdf-macross"})
                     new_content = new_response.content
