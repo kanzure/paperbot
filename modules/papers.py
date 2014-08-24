@@ -124,6 +124,7 @@ def download(phenny, input, verbose=True):
                             if proxy_type == 'custom_flask_json':
                                 headers['pdf_url'] = pdf_url
                                 headers['request_iteration'] = request_iteration
+                                request_iteration+=1
                                 response = requests.get(proxy_url, headers=headers)
                             elif proxy_type == 'normal':
                                 #i'm not even checking if http or https is in the pdf_url, since the default proxy of None is already being tried in this loop
@@ -150,13 +151,18 @@ def download(phenny, input, verbose=True):
                         if "pdf" in response.headers["content-type"]:
                             try:
                                 data = pdfparanoia.scrub(StringIO(data))
+                                try:
+                                    requests.get('http://localhost:8500/remoteprint', headers={'msg':'after pdfparanoia.scrub'})
+                                except:
+                                    pass
                                 break
                             except:
                                 #check for custom_flask_json proxy response, which indicates if the given custom proxy has more internal proxies to try with
                                 if 'proxies_remaining' in response.headers:
                                     #decrement the index if the custom proxy doesn't have any more internal proxies to try
                                     if response.headers['proxies_remaining'] == 0:
-                                        proxies_left_to_try-=1    
+                                        proxies_left_to_try-=1
+                                        request_iteration=0
                                 else:    
                                     #decrement the index to move on to the next proxy in our proxy_list
                                     proxies_left_to_try-=1
