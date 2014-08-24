@@ -111,7 +111,7 @@ def download(phenny, input, verbose=True):
                         response = None
                         proxy_url = proxy_list[proxy_url_index]['proxy_url']
                         proxy_type = proxy_list[proxy_url_index]['proxy_type']
-
+                        _log('proxies_left_to_try: %d' % proxies_left_to_try)
                         #perform default behaviour if proxy is None
                         if proxy_list[proxy_url_index]['proxy_url'] is None:
                             if pdf_url.startswith("https://"):
