@@ -17,6 +17,11 @@ logchannel = os.environ.get("LOGGING", None)
 proxy_list = [  {'proxy_url':None,'proxy_type':'normal'},
                 {'proxy_url':'http://localhost:8500/plsget', 'proxy_type':'custom_flask_json'} ]
 
+if logchannel:
+    _log = lambda x: phenny.msg("#%s" % logchannel, x)
+else:
+    _log = lambda x: None
+
 class paperbot_proxy_request(object):
     @classmethod
     def get(*args, **kwargs):
@@ -74,10 +79,7 @@ def download(phenny, input, verbose=True):
     """
     Downloads a paper.
     """
-    if logchannel:
-        _log = lambda x: phenny.msg("#%s" % logchannel, x)
-    else:
-        _log = lambda x: None
+    
     # only accept requests in a channel
     if not input.sender.startswith('#'):
         # unless the user is an admin, of course
