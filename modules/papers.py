@@ -104,6 +104,7 @@ def download(phenny, input, verbose=True):
 
                     proxies_left_to_try = len(proxy_list)
                     request_iteration = 0
+                    _log('before while proxies_left_to_try')
                     while proxies_left_to_try:
                         headers = {
                             "User-Agent": user_agent,
