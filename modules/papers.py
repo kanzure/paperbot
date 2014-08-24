@@ -16,11 +16,8 @@ import pdfparanoia
 logchannel = os.environ.get("LOGGING", None)
 proxy_list = [  {'proxy_url':None,'proxy_type':'normal'},
                 {'proxy_url':'http://localhost:8500/plsget', 'proxy_type':'custom_flask_json'} ]
-
-if logchannel:
-    _log = lambda x: phenny.msg("#%s" % logchannel, x)
-else:
-    _log = lambda x: None
+def nullLog(msg):
+    pass
 
 class paperbot_proxy_request(object):
     @classmethod
@@ -79,7 +76,10 @@ def download(phenny, input, verbose=True):
     """
     Downloads a paper.
     """
-    
+    if logchannel:
+        _log = lambda x: phenny.msg("#%s" % logchannel, x)
+    else:
+        _log = lambda x: None
     # only accept requests in a channel
     if not input.sender.startswith('#'):
         # unless the user is an admin, of course
@@ -259,7 +259,7 @@ def download(phenny, input, verbose=True):
             elif verbose and explicit:
                 _log("Translation server PDF fail")
                 shurl, doi = modules.scihub.scihubber(line)
-                phenny.say(download_url(line))
+                phenny.say(download_url(line, _log))
                 continue
         elif verbose and explicit:
             _log("Translation server fail")
@@ -268,11 +268,11 @@ def download(phenny, input, verbose=True):
         if shurl:
             if "pdfcache" in shurl:
                 if doi: phenny.say(modules.scihub.libgen(modules.scihub.scihub_dl(shurl), doi))
-                else: phenny.say(download_url(shurl, cookies=modules.scihub.shcookie))
+                else: phenny.say(download_url(shurl, _log, cookies=modules.scihub.shcookie))
             else: phenny.say(shurl)
         elif verbose and explicit:
             _log("All approaches failed")
-            phenny.say(download_url(line))
+            phenny.say(download_url(line, _log))
     return
 
 download.commands = ["fetch", "get", "download"]
@@ -289,7 +289,7 @@ def download_ieee(url):
     # url = "http://ieeexplore.ieee.org/iel5/27/19498/00901261.pdf?arnumber=901261"
     raise NotImplementedError
 
-def download_url(url, **kwargs):
+def download_url(url, _log=nullLog, **kwargs):
     response = requests.get(url, headers={"User-Agent": "origami-pdf"}, **kwargs)
     content = response.content
 
