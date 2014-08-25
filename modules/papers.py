@@ -347,7 +347,7 @@ def download_url(url, _log=nullLog, **kwargs):
                     except IndexError: 
                         title = tree.xpath("//title")[0].text
                         pdf_url = tree.xpath("//a[@id='pdfLink']/@href")[0]
-                    new_response = paperbot_proxy_request_obj.get(pdf_url, headers={"User-Agent": "sdf-macross"})
+                    new_response, extension = paperbot_proxy_request_obj.get(pdf_url, headers={"User-Agent": "sdf-macross"})
                     new_content = new_response.content
                     if "pdf" in new_response.headers["content-type"]:
                         extension = ".pdf"
