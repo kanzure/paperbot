@@ -16,7 +16,7 @@ import pdfparanoia
 
 logchannel = os.environ.get("LOGGING", None)
 proxy_list = [  {'proxy_url':None,'proxy_type':'normal'},
-                {'proxy_url':'http://localhost:8500/plsget', 'proxy_type':'custom_flask_json'} ]
+                {'proxy_url':'http://ec2-54-218-13-46.us-west-2.compute.amazonaws.com:8500/plsget', 'proxy_type':'custom_flask_json'} ]
 def nullLog(msg):
     pass
 
