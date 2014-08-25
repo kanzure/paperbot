@@ -37,6 +37,7 @@ class paperbot_download_request(object):
             proxy_url = proxy_list[proxy_url_index]['proxy_url']
             proxy_type = proxy_list[proxy_url_index]['proxy_type']
             _log('proxies_left_to_try: %d proxy_url_index %d' % (proxies_left_to_try, proxy_url_index))
+            _log('request_iteration: %d' % request_iteration)
             #perform default behaviour if proxy is None
             if proxy_list[proxy_url_index]['proxy_url'] is None:
                 if pdf_url.startswith("https://"):
@@ -53,7 +54,6 @@ class paperbot_download_request(object):
                     
                     headers["Content-Type"] = "application/json"
                     
-                    request_iteration+=1
                     _log('trying custom_flask_json, proxy_url %s' % proxy_url)
                     response = requests.get(proxy_url, data=json.dumps(data), headers=headers)
                 elif proxy_type == 'normal':
@@ -74,11 +74,16 @@ class paperbot_download_request(object):
                 return response, extension
 
             if 'proxies_remaining' in response.headers:
+                _log('proxies_remaining in headers')
                 #decrement the index if the custom proxy doesn't have any more internal proxies to try
                 if response.headers['proxies_remaining'] == 0:
                     proxies_left_to_try-=1
                     request_iteration=0
                     proxy_url_index+=1
+                else:
+                    _log('request_iteration+=1')
+                    request_iteration+=1
+
             else:    
                 #decrement the index to move on to the next proxy in our proxy_list
                 proxies_left_to_try-=1
