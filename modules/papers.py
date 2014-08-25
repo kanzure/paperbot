@@ -71,9 +71,11 @@ class paperbot_download_request(object):
             if use_generator:
                 yield response
             else:
+                _log('"pdf" in response.headers["content-type"] : %s' % ("pdf" in response.headers["content-type"]))
+                _log(response.headers["content-type"])
                 if "pdf" in response.headers["content-type"]:
                     extension = ".pdf"
-                    _log('.pdf in response.headers in paperbot_download_request')
+                    
                     yield (response, extension)
                     return
 
