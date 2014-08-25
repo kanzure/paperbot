@@ -30,7 +30,7 @@ class paperbot_proxy_request(object):
         _log = self._log
         _log(str(self))
         _log(str(pdf_url))
-        _log('before while proxies_left_to_try')
+        _log('paperbot_proxy_request pdf_url: %s' % pdf_url)
         while proxies_left_to_try:
             proxy_url = proxy_list[proxy_url_index]['proxy_url']
             proxy_type = proxy_list[proxy_url_index]['proxy_type']
@@ -347,6 +347,14 @@ def download_url(url, _log=nullLog, **kwargs):
                     except IndexError: 
                         title = tree.xpath("//title")[0].text
                         pdf_url = tree.xpath("//a[@id='pdfLink']/@href")[0]
+                    
+                    if 'http' not in pdf_url:
+                        main_url_split = response.url.split('//')
+                        http_prefix = main_url_split[0]
+                        if 'http' in http_prefix:
+                            domain_url = main_url_split[1].split('/')[0]
+                            pdf_url = http_prefix + '//' + domain_url + ('/' if pdf_url[0]!='/' else '') + pdf_url
+
                     new_response, extension = paperbot_proxy_request_obj.get(pdf_url, headers={"User-Agent": "sdf-macross"})
                     new_content = new_response.content
                     if "pdf" in new_response.headers["content-type"]:
