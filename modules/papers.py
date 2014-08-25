@@ -71,12 +71,12 @@ class paperbot_download_request(object):
             if use_generator:
                 yield response
             else:
-                _log('response.headers: %s' % (response.headers))
-                _log(response.headers["content-type"])
+                _log('checking \'PDF\' in response.headers')
                 if "pdf" in response.headers["content-type"]:
                     extension = ".pdf"
-                    
-                    yield (response, extension)
+                    _log('yielding tuply with PDF in response')
+                    #yield (response, extension)
+                    proxies_left_to_try=0
                     break
                     #return
 
@@ -100,7 +100,7 @@ class paperbot_download_request(object):
             return
         _log('last yield in paperbot_download_request')
         yield (response, extension)
-        return
+        
 
 def download(phenny, input, verbose=True):
     """
