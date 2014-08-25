@@ -22,7 +22,7 @@ def nullLog(msg):
 
 class paperbot_proxy_request(object):
     _log=nullLog
-    def get(self, *args, **kwargs):
+    def get(self, pdf_url, **kwargs):
         proxies_left_to_try = len(proxy_list)
         extension = ".txt"
         request_iteration = 0
@@ -36,9 +36,9 @@ class paperbot_proxy_request(object):
             #perform default behaviour if proxy is None
             if proxy_list[proxy_url_index]['proxy_url'] is None:
                 if pdf_url.startswith("https://"):
-                    response = requests.get(args, kwargs, verify=False)
+                    response = requests.get(pdf_url, **kwargs, verify=False)
                 else:
-                    response = requests.get(args, kwargs)
+                    response = requests.get(pdf_url, **kwargs)
             else:
                 #check type of proxy
                 if proxy_type == 'custom_flask_json':
