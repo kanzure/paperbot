@@ -20,7 +20,7 @@ proxy_list = [  {'proxy_url':None,'proxy_type':'normal'},
 def nullLog(msg):
     pass
 
-class paperbot_proxy_request(object):
+class paperbot_download_request(object):
     _log=nullLog
     def get(self, pdf_url, **kwargs):
         proxies_left_to_try = len(proxy_list)
@@ -32,7 +32,7 @@ class paperbot_proxy_request(object):
             "User-Agent": user_agent,
         }
         _log = self._log
-        _log('paperbot_proxy_request pdf_url: %s' % pdf_url)
+        _log('paperbot_download_request pdf_url: %s' % pdf_url)
         while proxies_left_to_try:
             proxy_url = proxy_list[proxy_url_index]['proxy_url']
             proxy_type = proxy_list[proxy_url_index]['proxy_type']
@@ -46,12 +46,16 @@ class paperbot_proxy_request(object):
             else:
                 #check type of proxy
                 if proxy_type == 'custom_flask_json':
-                    headers['pdf_url'] = pdf_url
-                    headers['request_iteration'] = request_iteration
-                    headers['headers'] = kwargs.get('headers', None)
+                    data = {'pdf_url' : pdf_url,
+                            'headers' : kwargs.get('headers', None),
+                            'request_iteration' : request_iteration
+                            }
+                    
+                    headers["Content-Type"] = "application/json"
+                    
                     request_iteration+=1
                     _log('trying custom_flask_json, proxy_url %s' % proxy_url)
-                    response = requests.get(proxy_url, headers=headers)
+                    response = requests.get(proxy_url, data=json.dumps(data), headers=headers)
                 elif proxy_type == 'normal':
                     #i'm not even checking if http or https is in the pdf_url, since the default proxy of None is already being tried in this loop
                     proxies = { 
@@ -167,79 +171,88 @@ def download(phenny, input, verbose=True):
 
                 if pdf_url:
                     user_agent = "Mozilla/5.0 (X11; Linux i686 (x86_64)) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11"
-
-                    proxies_left_to_try = len(proxy_list)
-                    request_iteration = 0
-                    proxy_url_index=0
-                    _log('before while proxies_left_to_try')
-                    while proxies_left_to_try:
-                        headers = {
-                            "User-Agent": user_agent,
-                        }
-                        response = None
-                        proxy_url = proxy_list[proxy_url_index]['proxy_url']
-                        proxy_type = proxy_list[proxy_url_index]['proxy_type']
-                        _log('proxies_left_to_try: %d' % proxies_left_to_try)
-                        #perform default behaviour if proxy is None
-                        if proxy_url is None:
-                            if pdf_url.startswith("https://"):
-                                response = requests.get(pdf_url, headers=headers, verify=False)
-                            else:
-                                response = requests.get(pdf_url, headers=headers)
+                    """
+                proxies_left_to_try = len(proxy_list)
+                request_iteration = 0
+                proxy_url_index=0
+                _log('before while proxies_left_to_try')
+                while proxies_left_to_try:
+                    headers = {
+                        "User-Agent": user_agent,
+                    }
+                    response = None
+                    proxy_url = proxy_list[proxy_url_index]['proxy_url']
+                    proxy_type = proxy_list[proxy_url_index]['proxy_type']
+                    _log('proxies_left_to_try: %d' % proxies_left_to_try)
+                    #perform default behaviour if proxy is None
+                    if proxy_url is None:
+                        if pdf_url.startswith("https://"):
+                            response = requests.get(pdf_url, headers=headers, verify=False)
                         else:
+                            response = requests.get(pdf_url, headers=headers)
+                    else:
 
-                            #check type of proxy
-                            if proxy_type == 'custom_flask_json':
-                                headers['pdf_url'] = pdf_url
-                                headers['request_iteration'] = request_iteration
-                                request_iteration+=1
-                                response = requests.get(proxy_url, headers=headers)
-                            elif proxy_type == 'normal':
-                                #i'm not even checking if http or https is in the pdf_url, since the default proxy of None is already being tried in this loop
-                                proxies = { 
-                                  "http": proxy_url,
-                                  "https": proxy_url,
-                                }
-                                response = requests.get(pdf_url, headers=headers, proxies=proxies)
+                        #check type of proxy
+                        if proxy_type == 'custom_flask_json':
+                            
+                            headers["Content-Type"] = "application/json"
+                            data = {'pdf_url' : pdf_url,
+                                    'request_iteration' : request_iteration
+                                    }
+                            
+                            request_iteration+=1
+                            response = requests.get(proxy_url, data=json.dumps(data), headers=headers)
+                        elif proxy_type == 'normal':
+                            #i'm not even checking if http or https is in the pdf_url, since the default proxy of None is already being tried in this loop
+                            proxies = { 
+                              "http": proxy_url,
+                              "https": proxy_url,
+                            }
+                            response = requests.get(pdf_url, headers=headers, proxies=proxies)
+                    """
+                    paperbot_download_request_obj = paperbot_download_request()
+                    paperbot_download_request_obj._log = _log
+                    response, extension = paperbot_download_request_obj.get(pdf_url, headers=headers)
 
-                        # detect failure
-                        if response.status_code != 200:
-                            shurl, _ = modules.scihub.scihubber(pdf_url)
-                            if shurl:
-                                if "libgen" in shurl:
-                                    phenny.say("http://libgen.org/scimag/get.php?doi=%s" % urllib.quote_plus(item["DOI"]))
-                                elif "pdfcache" not in shurl:
-                                    phenny.say(shurl)
-                                else:
-                                    phenny.say(modules.scihub.libgen(modules.scihub.scihub_dl(shurl), item["DOI"]))
-                            return
+                    # detect failure
+                    if response.status_code != 200:
+                        shurl, _ = modules.scihub.scihubber(pdf_url)
+                        if shurl:
+                            if "libgen" in shurl:
+                                phenny.say("http://libgen.org/scimag/get.php?doi=%s" % urllib.quote_plus(item["DOI"]))
+                            elif "pdfcache" not in shurl:
+                                phenny.say(shurl)
+                            else:
+                                phenny.say(modules.scihub.libgen(modules.scihub.scihub_dl(shurl), item["DOI"]))
+                        return
 
-                        data = response.content
+                    data = response.content
 
-                        if "pdf" in response.headers["content-type"]:
+                    if "pdf" in response.headers["content-type"]:
+                        try:
+                            data = pdfparanoia.scrub(StringIO(data))
                             try:
-                                data = pdfparanoia.scrub(StringIO(data))
-                                try:
-                                    _log('after pdfparanoia.scrub')
-                                    requests.get('http://localhost:8500/remoteprint', headers={'msg':'after pdfparanoia.scrub'})
-                                except:
-                                    pass
-                                break
+                                _log('after pdfparanoia.scrub')
+                                requests.get('http://localhost:8500/remoteprint', headers={'msg':'after pdfparanoia.scrub'})
                             except:
-                                #check for custom_flask_json proxy response, which indicates if the given custom proxy has more internal proxies to try with
-                                if 'proxies_remaining' in response.headers:
-                                    #decrement the index if the custom proxy doesn't have any more internal proxies to try
-                                    if response.headers['proxies_remaining'] == 0:
-                                        proxies_left_to_try-=1
-                                        proxy_url_index+=1
-                                        request_iteration=0
-                                else:    
-                                    #decrement the index to move on to the next proxy in our proxy_list
+                                pass
+                            break
+                        except:
+                            """
+                            #check for custom_flask_json proxy response, which indicates if the given custom proxy has more internal proxies to try with
+                            if 'proxies_remaining' in response.headers:
+                                #decrement the index if the custom proxy doesn't have any more internal proxies to try
+                                if response.headers['proxies_remaining'] == 0:
                                     proxies_left_to_try-=1
                                     proxy_url_index+=1
-
-                                # this is to avoid a PDFNotImplementedError
-                                pass
+                                    request_iteration=0
+                            else:    
+                                #decrement the index to move on to the next proxy in our proxy_list
+                                proxies_left_to_try-=1
+                                proxy_url_index+=1
+                            """
+                            # this is to avoid a PDFNotImplementedError
+                            pass
 
                     if item.has_key("DOI"):
                         phenny.say(modules.scihub.libgen(data, item["DOI"]))
@@ -306,8 +319,8 @@ def download_ieee(url):
 def download_url(url, _log=nullLog, **kwargs):
     response = requests.get(url, headers={"User-Agent": "origami-pdf"}, **kwargs)
     content = response.content
-    paperbot_proxy_request_obj = paperbot_proxy_request()
-    paperbot_proxy_request_obj._log = _log
+    paperbot_download_request_obj = paperbot_download_request()
+    paperbot_download_request_obj._log = _log
     # just make up a default filename
     title = "%0.2x" % random.getrandbits(128)
 
@@ -359,7 +372,7 @@ def download_url(url, _log=nullLog, **kwargs):
                             domain_url = main_url_split[1].split('/')[0]
                             pdf_url = http_prefix + '//' + domain_url + ('/' if pdf_url[0]!='/' else '') + pdf_url
 
-                    new_response, extension = paperbot_proxy_request_obj.get(pdf_url, headers={"User-Agent": "sdf-macross"})
+                    new_response, extension = paperbot_download_request_obj.get(pdf_url, headers={"User-Agent": "sdf-macross"})
                     new_content = new_response.content
                     if "pdf" in new_response.headers["content-type"]:
                         extension = ".pdf"
