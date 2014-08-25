@@ -80,7 +80,7 @@ class paperbot_download_request(object):
                     return
 
             if 'proxies_remaining' in response.headers:
-                _log('proxies_remaining in headers')
+                _log('proxies_remaining in headers: %s' % response.headers['proxies_remaining'])
                 #decrement the index if the custom proxy doesn't have any more internal proxies to try
                 if response.headers['proxies_remaining'] == 0:
                     proxies_left_to_try-=1
@@ -93,6 +93,7 @@ class paperbot_download_request(object):
             else:    
                 #decrement the index to move on to the next proxy in our proxy_list
                 proxies_left_to_try-=1
+                request_iteration=0
                 proxy_url_index+=1
         if use_generator:
             return
