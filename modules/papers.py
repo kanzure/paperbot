@@ -73,7 +73,8 @@ class paperbot_download_request(object):
             else:
                 if "pdf" in response.headers["content-type"]:
                     extension = ".pdf"
-                    yield response, extension
+                    _log('.pdf in response.headers in paperbot_download_request')
+                    yield (response, extension)
                     return
 
             if 'proxies_remaining' in response.headers:
@@ -93,8 +94,8 @@ class paperbot_download_request(object):
                 proxy_url_index+=1
         if use_generator:
             return
-
-        yield response, extension
+        _log('last yield in paperbot_download_request')
+        yield (response, extension)
         return
 
 def download(phenny, input, verbose=True):
