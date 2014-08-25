@@ -22,7 +22,11 @@ from storage import (
 )
 
 from ezproxy import EZPROXY_CONFIG
-from httptools import run_url_fixers
+
+from httptools import (
+    run_url_fixers,
+    is_same_url,
+)
 
 from htmltools import (
     parse_html,
@@ -118,55 +122,58 @@ def download(url, paper=None):
             paper.pdf = pdfcontent
             store(paper)
             break
-        else:
-            paper.html = response.content
 
-            # Was not pdf. Attempt to parse the HTML based on normal expected
-            # HTML elements. The HTML elements may say that the actual pdf url
-            # is something else. If this happens, then attempt to download that
-            # pdf url instead and then break out of this loop.
+        paper.html = response.content
 
-            # no reason to get same metadata on every iteration of loop
-            if not populated_metadata:
-                tree = parse_html(response.content)
+        # Was not pdf. Attempt to parse the HTML based on normal expected
+        # HTML elements. The HTML elements may say that the actual pdf url
+        # is something else. If this happens, then attempt to download that
+        # pdf url instead and then break out of this loop.
 
-                # most publishers show paper metadata in html in same way because ?
-                populate_metadata_from_tree(tree, paper)
+        # no reason to get same metadata on every iteration of loop
+        if not populated_metadata:
+            tree = parse_html(response.content)
 
-                # TODO: better way to check if populate_metadata_from_tree did
-                # anything useful?
-                if paper.title in [None, ""]:
-                    log.debug("# TODO: parse metadata from html using plugins here")
-                else:
-                    populated_metadata = True
+            # most publishers show paper metadata in html in same way because ?
+            populate_metadata_from_tree(tree, paper)
 
-            # can't try anything else if the url is still bad
-            if paper.pdf_url in [None, ""]:
-                continue
-
-            if paper.pdf_url == url:
-                # pdf_url is same as original url, no pdf found yet. This
-                # happens when the pdf url is correct, but the publisher is
-                # returning html instead. And the html happens to reference the
-                # url that was originally requested in the first place. Argh.
-                continue
+            # TODO: better way to check if populate_metadata_from_tree did
+            # anything useful?
+            if paper.title in [None, ""]:
+                log.debug("# TODO: parse metadata from html using plugins here")
             else:
-                log.debug("Switching activity to pdf_url {}".format(paper.pdf_url))
+                populated_metadata = True
 
-                # paper pdf is stored at a different url. Attempt to fetch that
-                # url now. Only do this if pdf_url != url because otherwise
-                # this will be an endless loop.
-                for (url3, response2) in iterdownload(paper.pdf_url, paper=paper):
-                    if is_response_pdf(response2):
-                        log.debug("Got pdf on second-level page.")
-                        pdfcontent = remove_watermarks(response.content)
-                        paper.pdf = pdfcontent
-                        store(paper)
-                        break
-                else:
-                    log.debug("Couldn't download pdf from {}".format(paper.pdf_url))
+        # can't try anything else if the url is still bad
+        if paper.pdf_url in [None, ""]:
+            continue
 
+        # Normalize the two urls. The url from the metadata on the page
+        # might be different from the url that was originally passed in,
+        # even though both urls might still refer to the same resource.
+        if is_same_url(url, paper.pdf_url):
+            # pdf_url is same as original url, no pdf found yet. This
+            # happens when the pdf url is correct, but the publisher is
+            # returning html instead. And the html happens to reference the
+            # url that was originally requested in the first place. Argh.
+            continue
+
+        log.debug("Switching activity to pdf_url {}".format(paper.pdf_url))
+
+        # paper pdf is stored at a different url. Attempt to fetch that
+        # url now. Only do this if pdf_url != url because otherwise
+        # this will be an endless loop.
+        for (url3, response2) in iterdownload(paper.pdf_url, paper=paper):
+            if is_response_pdf(response2):
+                log.debug("Got pdf on second-level page.")
+                pdfcontent = remove_watermarks(response.content)
+                paper.pdf = pdfcontent
+                store(paper)
                 break
+        else:
+            log.debug("Couldn't download pdf from {}".format(paper.pdf_url))
+
+        break
 
     # was pdf downloaded?
     if (hasattr(paper, "pdf") and paper.pdf not in [None, ""]) or os.path.exists(paper.file_path_pdf):

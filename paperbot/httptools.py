@@ -27,6 +27,16 @@ def run_url_fixers(url):
 
     return url
 
+def is_same_url(url1, url2):
+    """
+    Normalize the given urls and check whether or not they are referencing the
+    same resource.
+    """
+    log.debug("Comparing two urls:\nurl1: {}\nurl2: {}".format(url1, url2))
+    url1 = run_url_fixers(url1)
+    url2 = run_url_fixers(url2)
+    return url1 == url2
+
 def fix_ieee_login_url(url):
     """
     Fixes urls point to login.jsp on IEEE Xplore. When someone browses to the
