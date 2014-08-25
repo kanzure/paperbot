@@ -27,6 +27,7 @@ class paperbot_proxy_request(object):
         extension = ".txt"
         request_iteration = 0
         proxy_url_index = 0
+        user_agent = "Mozilla/5.0 (X11; Linux i686 (x86_64)) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11"
         headers = {
             "User-Agent": user_agent,
         }
