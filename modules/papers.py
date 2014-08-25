@@ -22,7 +22,7 @@ def nullLog(msg):
 
 class paperbot_download_request(object):
     _log=nullLog
-    def get(self, pdf_url, **kwargs):
+    def get(self, pdf_url, use_generator=False, **kwargs):
         proxies_left_to_try = len(proxy_list)
         extension = ".txt"
         request_iteration = 0
@@ -68,10 +68,13 @@ class paperbot_download_request(object):
                         response = requests.get(pdf_url, headers=headers, proxies=proxies)
                     else:
                         response = requests.get(pdf_url, proxies=proxies)
-
-            if "pdf" in response.headers["content-type"]:
-                extension = ".pdf"
-                return response, extension
+            if use_generator:
+                yield response
+            else:
+                if "pdf" in response.headers["content-type"]:
+                    extension = ".pdf"
+                    yield response, extension
+                    return
 
             if 'proxies_remaining' in response.headers:
                 _log('proxies_remaining in headers')
@@ -88,8 +91,11 @@ class paperbot_download_request(object):
                 #decrement the index to move on to the next proxy in our proxy_list
                 proxies_left_to_try-=1
                 proxy_url_index+=1
+        if use_generator:
+            return
 
-        return response, extension
+        yield response, extension
+        return
 
 def download(phenny, input, verbose=True):
     """
@@ -322,98 +328,115 @@ def download_ieee(url):
     raise NotImplementedError
 
 def download_url(url, _log=nullLog, **kwargs):
-    response = requests.get(url, headers={"User-Agent": "origami-pdf"}, **kwargs)
-    content = response.content
     paperbot_download_request_obj = paperbot_download_request()
     paperbot_download_request_obj._log = _log
-    # just make up a default filename
-    title = "%0.2x" % random.getrandbits(128)
+    response_generator = paperbot_download_request_obj.get(url, use_generator=True, headers={"User-Agent": "origami-pdf"})
+    for response in response_generator:
+        content = response.content
+        #response = requests.get(url, headers={"User-Agent": "origami-pdf"}, **kwargs)
+        #content = response.content
+        
+        # just make up a default filename
+        title = "%0.2x" % random.getrandbits(128)
 
-    # default extension
-    extension = ".txt"
+        # default extension
+        extension = ".txt"
 
-    if "pdf" in response.headers["content-type"]:
-        extension = ".pdf"
-    elif check_if_html(response):
-        # parse the html string with lxml.etree
-        tree = parse_html(content)
-
-        # extract some metadata with xpaths
-        citation_pdf_url = find_citation_pdf_url(tree, url)
-        citation_title = find_citation_title(tree)
-
-        # aip.org sucks, citation_pdf_url is wrong
-        if citation_pdf_url and "link.aip.org/" in citation_pdf_url:
-            citation_pdf_url = None
-
-        if citation_pdf_url and "ieeexplore.ieee.org" in citation_pdf_url:
-            content = requests.get(citation_pdf_url).content
+        if "pdf" in response.headers["content-type"]:
+            extension = ".pdf"
+        elif check_if_html(response):
+            # parse the html string with lxml.etree
             tree = parse_html(content)
-            # citation_title = ...
 
-        # wow, this seriously needs to be cleaned up
-        if citation_pdf_url and citation_title and not "ieeexplore.ieee.org" in citation_pdf_url:
-            citation_title = citation_title.encode("ascii", "ignore")
-            response = requests.get(citation_pdf_url, headers={"User-Agent": "pdf-defense-force"})
-            content = response.content
-            if "pdf" in response.headers["content-type"]:
-                extension = ".pdf"
-                title = citation_title
-        else:
-            if "sciencedirect.com" in url and not "ShoppingCart" in url:
-                _log('download_url got a sciencedirect URL')
-                try:
+            # extract some metadata with xpaths
+            citation_pdf_url = find_citation_pdf_url(tree, url)
+            citation_title = find_citation_title(tree)
+
+            # aip.org sucks, citation_pdf_url is wrong
+            if citation_pdf_url and "link.aip.org/" in citation_pdf_url:
+                citation_pdf_url = None
+
+            if citation_pdf_url and "ieeexplore.ieee.org" in citation_pdf_url:
+                content = requests.get(citation_pdf_url).content
+                tree = parse_html(content)
+                # citation_title = ...
+
+            # wow, this seriously needs to be cleaned up
+            if citation_pdf_url and citation_title and not "ieeexplore.ieee.org" in citation_pdf_url:
+                citation_title = citation_title.encode("ascii", "ignore")
+                response = requests.get(citation_pdf_url, headers={"User-Agent": "pdf-defense-force"})
+                content = response.content
+                if "pdf" in response.headers["content-type"]:
+                    extension = ".pdf"
+                    title = citation_title
+            else:
+                if "sciencedirect.com" in url and not "ShoppingCart" in url:
+                    _log('download_url got a sciencedirect URL')
                     try:
-                        title = tree.xpath("//h1[@class='svTitle']")[0].text
-                        pdf_url = tree.xpath("//a[@id='pdfLink']/@href")[0]
-                    except IndexError: 
-                        title = tree.xpath("//title")[0].text
-                        pdf_url = tree.xpath("//a[@id='pdfLink']/@href")[0]
-                    
-                    if 'http' not in pdf_url:
-                        main_url_split = response.url.split('//')
-                        http_prefix = main_url_split[0]
-                        if 'http' in http_prefix:
-                            domain_url = main_url_split[1].split('/')[0]
-                            pdf_url = http_prefix + '//' + domain_url + ('/' if pdf_url[0]!='/' else '') + pdf_url
+                        try:
+                            title = tree.xpath("//h1[@class='svTitle']")[0].text
+                            pdf_url = tree.xpath("//a[@id='pdfLink']/@href")[0]
+                        except IndexError: 
+                            title = tree.xpath("//title")[0].text
+                            pdf_url = tree.xpath("//a[@id='pdfLink']/@href")[0]
+                        
+                        if 'http' not in pdf_url:
+                            main_url_split = response.url.split('//')
+                            http_prefix = main_url_split[0]
+                            if 'http' in http_prefix:
+                                domain_url = main_url_split[1].split('/')[0]
+                                pdf_url = http_prefix + '//' + domain_url + ('/' if pdf_url[0]!='/' else '') + pdf_url
 
-                    new_response, extension = paperbot_download_request_obj.get(pdf_url, headers={"User-Agent": "sdf-macross"})
-                    new_content = new_response.content
-                    if "pdf" in new_response.headers["content-type"]:
-                        extension = ".pdf"
-                except Exception as e:
-                    _log(traceback.format_exc())
-                    pass
-                else:
-                    content = new_content
-                    response = new_response
-            elif "jstor.org/" in url:
-                # clean up the url
-                if "?" in url:
-                    url = url[0:url.find("?")]
-
-                # not all pages have the <input type="hidden" name="ppv-title"> element
-                try:
-                    title = tree.xpath("//div[@class='hd title']")[0].text
-                except Exception:
-                    try:
-                        title = tree.xpath("//input[@name='ppv-title']/@value")[0]
-                    except Exception:
+                        new_response, extension = paperbot_download_request_obj.get(pdf_url, headers={"User-Agent": "sdf-macross"})
+                        new_content = new_response.content
+                        if "pdf" in new_response.headers["content-type"]:
+                            extension = ".pdf"
+                    except Exception as e:
+                        _log(traceback.format_exc())
                         pass
+                    else:
+                        content = new_content
+                        response = new_response
+                elif "jstor.org/" in url:
+                    # clean up the url
+                    if "?" in url:
+                        url = url[0:url.find("?")]
 
-                # get the document id
-                document_id = None
-                if url[-1] != "/":
-                    #if "stable/" in url:
-                    #elif "discover/" in url:
-                    #elif "action/showShelf?candidate=" in url:
-                    #elif "pss/" in url:
-                    document_id = url.split("/")[-1]
-
-                if document_id.isdigit():
+                    # not all pages have the <input type="hidden" name="ppv-title"> element
                     try:
-                        pdf_url = "http://www.jstor.org/stable/pdfplus/" + document_id + ".pdf?acceptTC=true"
-                        new_response = requests.get(pdf_url, headers={"User-Agent": "time-machine/1.1"})
+                        title = tree.xpath("//div[@class='hd title']")[0].text
+                    except Exception:
+                        try:
+                            title = tree.xpath("//input[@name='ppv-title']/@value")[0]
+                        except Exception:
+                            pass
+
+                    # get the document id
+                    document_id = None
+                    if url[-1] != "/":
+                        #if "stable/" in url:
+                        #elif "discover/" in url:
+                        #elif "action/showShelf?candidate=" in url:
+                        #elif "pss/" in url:
+                        document_id = url.split("/")[-1]
+
+                    if document_id.isdigit():
+                        try:
+                            pdf_url = "http://www.jstor.org/stable/pdfplus/" + document_id + ".pdf?acceptTC=true"
+                            new_response = requests.get(pdf_url, headers={"User-Agent": "time-machine/1.1"})
+                            new_content = new_response.content
+                            if "pdf" in new_response.headers["content-type"]:
+                                extension = ".pdf"
+                        except Exception:
+                            pass
+                        else:
+                            content = new_content
+                            response = new_response
+                elif ".aip.org/" in url:
+                    try:
+                        title = tree.xpath("//title/text()")[0].split(" | ")[0]
+                        pdf_url = [link for link in tree.xpath("//a/@href") if "getpdf" in link][0]
+                        new_response = requests.get(pdf_url, headers={"User-Agent": "time-machine/1.0"})
                         new_content = new_response.content
                         if "pdf" in new_response.headers["content-type"]:
                             extension = ".pdf"
@@ -422,49 +445,36 @@ def download_url(url, _log=nullLog, **kwargs):
                     else:
                         content = new_content
                         response = new_response
-            elif ".aip.org/" in url:
-                try:
-                    title = tree.xpath("//title/text()")[0].split(" | ")[0]
-                    pdf_url = [link for link in tree.xpath("//a/@href") if "getpdf" in link][0]
-                    new_response = requests.get(pdf_url, headers={"User-Agent": "time-machine/1.0"})
-                    new_content = new_response.content
-                    if "pdf" in new_response.headers["content-type"]:
-                        extension = ".pdf"
-                except Exception:
-                    pass
-                else:
-                    content = new_content
-                    response = new_response
-            elif "ieeexplore.ieee.org" in url:
-                try:
-                    pdf_url = [url for url in tree.xpath("//frame/@src") if "pdf" in url][0]
-                    new_response = requests.get(pdf_url, headers={"User-Agent": "time-machine/2.0"})
-                    new_content = new_response.content
-                    if "pdf" in new_response.headers["content-type"]:
-                        extension = ".pdf"
-                except Exception:
-                    pass
-                else:
-                    content = new_content
-                    response = new_response
-            elif "h1 class=\"articleTitle" in content:
-                try:
-                    title = tree.xpath("//h1[@class='articleTitle']")[0].text
-                    title = title.encode("ascii", "ignore")
-                    pdf_url = tree.xpath("//a[@title='View the Full Text PDF']/@href")[0]
-                except:
-                    pass
-                else:
-                    if pdf_url.startswith("/"):
-                        url_start = url[:url.find("/",8)]
-                        pdf_url = url_start + pdf_url
-                    response = requests.get(pdf_url, headers={"User-Agent": "pdf-teapot"})
-                    content = response.content
-                    if "pdf" in response.headers["content-type"]:
-                        extension = ".pdf"
-            # raise Exception("problem with citation_pdf_url or citation_title")
-            # well, at least save the contents from the original url
-            pass
+                elif "ieeexplore.ieee.org" in url:
+                    try:
+                        pdf_url = [url for url in tree.xpath("//frame/@src") if "pdf" in url][0]
+                        new_response = requests.get(pdf_url, headers={"User-Agent": "time-machine/2.0"})
+                        new_content = new_response.content
+                        if "pdf" in new_response.headers["content-type"]:
+                            extension = ".pdf"
+                    except Exception:
+                        pass
+                    else:
+                        content = new_content
+                        response = new_response
+                elif "h1 class=\"articleTitle" in content:
+                    try:
+                        title = tree.xpath("//h1[@class='articleTitle']")[0].text
+                        title = title.encode("ascii", "ignore")
+                        pdf_url = tree.xpath("//a[@title='View the Full Text PDF']/@href")[0]
+                    except:
+                        pass
+                    else:
+                        if pdf_url.startswith("/"):
+                            url_start = url[:url.find("/",8)]
+                            pdf_url = url_start + pdf_url
+                        response = requests.get(pdf_url, headers={"User-Agent": "pdf-teapot"})
+                        content = response.content
+                        if "pdf" in response.headers["content-type"]:
+                            extension = ".pdf"
+                # raise Exception("problem with citation_pdf_url or citation_title")
+                # well, at least save the contents from the original url
+                pass
 
     # make the title again just in case
     if not title:
