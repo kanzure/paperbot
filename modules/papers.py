@@ -392,6 +392,7 @@ def download_url(url, _log=nullLog, **kwargs):
 
                         new_response, extension = paperbot_download_request_obj2.get(pdf_url, headers={"User-Agent": "sdf-macross"})
                         new_content = new_response.content
+                        _log('paperbot_download_request_obj2 content-type: %s' % new_response.headers["content-type"])
                         if "pdf" in new_response.headers["content-type"]:
                             extension = ".pdf"
                     except Exception as e:
