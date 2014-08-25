@@ -36,7 +36,7 @@ class paperbot_proxy_request(object):
         while proxies_left_to_try:
             proxy_url = proxy_list[proxy_url_index]['proxy_url']
             proxy_type = proxy_list[proxy_url_index]['proxy_type']
-            _log('proxies_left_to_try: %d' % proxies_left_to_try)
+            _log('proxies_left_to_try: %d proxy_url_index %d' % (proxies_left_to_try, proxy_url_index))
             #perform default behaviour if proxy is None
             if proxy_list[proxy_url_index]['proxy_url'] is None:
                 if pdf_url.startswith("https://"):
@@ -50,6 +50,7 @@ class paperbot_proxy_request(object):
                     headers['request_iteration'] = request_iteration
                     headers['headers'] = kwargs.get('headers', None)
                     request_iteration+=1
+                    _log('trying custom_flask_json, proxy_url %s' % proxy_url)
                     response = requests.get(proxy_url, headers=headers)
                 elif proxy_type == 'normal':
                     #i'm not even checking if http or https is in the pdf_url, since the default proxy of None is already being tried in this loop
