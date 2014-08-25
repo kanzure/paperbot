@@ -22,12 +22,11 @@ def nullLog(msg):
 
 class paperbot_proxy_request(object):
     _log=nullLog
-    @classmethod
-    def get(*args, **kwargs):
+    def get(self, *args, **kwargs):
         proxies_left_to_try = len(proxy_list)
         extension = ".txt"
         request_iteration = 0
-        _log = paperbot_proxy_request._log
+        _log = self._log
         _log('before while proxies_left_to_try')
         while proxies_left_to_try:
             proxy_url = proxy_list[proxy_url_index]['proxy_url']
@@ -295,7 +294,8 @@ def download_ieee(url):
 def download_url(url, _log=nullLog, **kwargs):
     response = requests.get(url, headers={"User-Agent": "origami-pdf"}, **kwargs)
     content = response.content
-
+    paperbot_proxy_request_obj = paperbot_proxy_request()
+    paperbot_proxy_request_obj._log = _log
     # just make up a default filename
     title = "%0.2x" % random.getrandbits(128)
 
@@ -339,8 +339,7 @@ def download_url(url, _log=nullLog, **kwargs):
                     except IndexError: 
                         title = tree.xpath("//title")[0].text
                         pdf_url = tree.xpath("//a[@id='pdfLink']/@href")[0]
-                    paperbot_proxy_request._log = _log
-                    new_response = paperbot_proxy_request.get(pdf_url, headers={"User-Agent": "sdf-macross"})
+                    new_response = paperbot_proxy_request_obj.get(pdf_url, headers={"User-Agent": "sdf-macross"})
                     new_content = new_response.content
                     if "pdf" in new_response.headers["content-type"]:
                         extension = ".pdf"
