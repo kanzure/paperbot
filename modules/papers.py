@@ -335,7 +335,10 @@ def download_url(url, _log=nullLog, **kwargs):
     paperbot_download_request_obj = paperbot_download_request()
     paperbot_download_request_obj._log = _log
     response_generator = paperbot_download_request_obj.get(url, use_generator=True, headers={"User-Agent": "origami-pdf"})
+    cc=0
     for response in response_generator:
+        _log('using generator for %s time' % cc)
+        cc+=1
         paperbot_download_request_obj2 = paperbot_download_request()
         paperbot_download_request_obj2._log = _log
         content = response.content
