@@ -26,6 +26,7 @@ class paperbot_proxy_request(object):
         proxies_left_to_try = len(proxy_list)
         extension = ".txt"
         request_iteration = 0
+        proxy_url_index = 0
         _log = self._log
         _log('before while proxies_left_to_try')
         while proxies_left_to_try:
@@ -68,9 +69,11 @@ class paperbot_proxy_request(object):
                 if response.headers['proxies_remaining'] == 0:
                     proxies_left_to_try-=1
                     request_iteration=0
+                    proxy_url_index+=1
             else:    
                 #decrement the index to move on to the next proxy in our proxy_list
                 proxies_left_to_try-=1
+                proxy_url_index+=1
 
         return response, extension
 
@@ -162,6 +165,7 @@ def download(phenny, input, verbose=True):
 
                     proxies_left_to_try = len(proxy_list)
                     request_iteration = 0
+                    proxy_url_index=0
                     _log('before while proxies_left_to_try')
                     while proxies_left_to_try:
                         headers = {
@@ -172,7 +176,7 @@ def download(phenny, input, verbose=True):
                         proxy_type = proxy_list[proxy_url_index]['proxy_type']
                         _log('proxies_left_to_try: %d' % proxies_left_to_try)
                         #perform default behaviour if proxy is None
-                        if proxy_list[proxy_url_index]['proxy_url'] is None:
+                        if proxy_url is None:
                             if pdf_url.startswith("https://"):
                                 response = requests.get(pdf_url, headers=headers, verify=False)
                             else:
@@ -222,10 +226,12 @@ def download(phenny, input, verbose=True):
                                     #decrement the index if the custom proxy doesn't have any more internal proxies to try
                                     if response.headers['proxies_remaining'] == 0:
                                         proxies_left_to_try-=1
+                                        proxy_url_index+=1
                                         request_iteration=0
                                 else:    
                                     #decrement the index to move on to the next proxy in our proxy_list
                                     proxies_left_to_try-=1
+                                    proxy_url_index+=1
 
                                 # this is to avoid a PDFNotImplementedError
                                 pass
