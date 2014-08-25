@@ -77,7 +77,8 @@ class paperbot_download_request(object):
                     extension = ".pdf"
                     
                     yield (response, extension)
-                    return
+                    break
+                    #return
 
             if 'proxies_remaining' in response.headers:
                 _log('proxies_remaining in headers: %s' % response.headers['proxies_remaining'])
@@ -395,7 +396,7 @@ def download_url(url, _log=nullLog, **kwargs):
                                 domain_url = main_url_split[1].split('/')[0]
                                 pdf_url = http_prefix + '//' + domain_url + ('/' if pdf_url[0]!='/' else '') + pdf_url
 
-                        new_response, extension = paperbot_download_request_obj2.get(pdf_url, headers={"User-Agent": "sdf-macross"})
+                        new_response, extension = paperbot_download_request_obj2.get(pdf_url, use_generator=False, headers={"User-Agent": "sdf-macross"})
                         new_content = new_response.content
                         _log('paperbot_download_request_obj2 content-type: %s' % new_response.headers["content-type"])
                         if "pdf" in new_response.headers["content-type"]:
