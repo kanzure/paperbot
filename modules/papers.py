@@ -28,6 +28,8 @@ class paperbot_proxy_request(object):
         request_iteration = 0
         proxy_url_index = 0
         _log = self._log
+        _log(str(self))
+        _log(str(pdf_url))
         _log('before while proxies_left_to_try')
         while proxies_left_to_try:
             proxy_url = proxy_list[proxy_url_index]['proxy_url']
