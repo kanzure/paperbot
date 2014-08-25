@@ -227,7 +227,10 @@ def download(phenny, input, verbose=True):
                     """
                     paperbot_download_request_obj = paperbot_download_request()
                     paperbot_download_request_obj._log = _log
-                    response, extension = paperbot_download_request_obj.get(pdf_url, headers=headers)
+                    gen = paperbot_download_request_obj.get(pdf_url, use_generator=False, headers=headers)
+                    #this is stupidly ugly
+                    for genresponse in gen:
+                        response, extension = genresponse
 
                     # detect failure
                     if response.status_code != 200:
