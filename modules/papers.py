@@ -38,7 +38,7 @@ class paperbot_proxy_request(object):
             #perform default behaviour if proxy is None
             if proxy_list[proxy_url_index]['proxy_url'] is None:
                 if pdf_url.startswith("https://"):
-                    response = requests.get(pdf_url, **kwargs, verify=False)
+                    response = requests.get(pdf_url,  verify=False, **kwargs)
                 else:
                     response = requests.get(pdf_url, **kwargs)
             else:
