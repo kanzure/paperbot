@@ -395,8 +395,10 @@ def download_url(url, _log=nullLog, **kwargs):
                             if 'http' in http_prefix:
                                 domain_url = main_url_split[1].split('/')[0]
                                 pdf_url = http_prefix + '//' + domain_url + ('/' if pdf_url[0]!='/' else '') + pdf_url
-
-                        new_response, extension = paperbot_download_request_obj2.get(pdf_url, use_generator=False, headers={"User-Agent": "sdf-macross"})
+                        gen = paperbot_download_request_obj2.get(pdf_url, use_generator=False, headers={"User-Agent": "sdf-macross"})
+                        #this is stupidly ugly
+                        for genresponse in gen:
+                            new_response, extension = genresponse
                         new_content = new_response.content
                         _log('paperbot_download_request_obj2 content-type: %s' % new_response.headers["content-type"])
                         if "pdf" in new_response.headers["content-type"]:
