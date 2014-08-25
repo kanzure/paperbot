@@ -27,7 +27,7 @@ class paperbot_proxy_request(object):
         proxies_left_to_try = len(proxy_list)
         extension = ".txt"
         request_iteration = 0
-        _log = self._log
+        _log = paperbot_proxy_request._log
         _log('before while proxies_left_to_try')
         while proxies_left_to_try:
             proxy_url = proxy_list[proxy_url_index]['proxy_url']
