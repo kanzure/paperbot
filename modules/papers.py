@@ -71,7 +71,7 @@ class paperbot_download_request(object):
             if use_generator:
                 yield response
             else:
-                _log('"pdf" in response.headers["content-type"] : %s' % ("pdf" in response.headers["content-type"]))
+                _log('response.headers: %s' % (response.headers))
                 _log(response.headers["content-type"])
                 if "pdf" in response.headers["content-type"]:
                     extension = ".pdf"
@@ -161,8 +161,7 @@ def download(phenny, input, verbose=True):
         data = json.dumps(data)
 
         response = requests.post(translation_url, data=data, headers=headers)
-        if verbose and explicit:
-            _log('response.status_code: %s, response.content != "[]": %s' % (str(response.status_code), str(response.content != "[]")))
+
         if response.status_code == 200 and response.content != "[]":
             # see if there are any attachments
             content = json.loads(response.content)
@@ -401,6 +400,7 @@ def download_url(url, _log=nullLog, **kwargs):
                         _log('paperbot_download_request_obj2 content-type: %s' % new_response.headers["content-type"])
                         if "pdf" in new_response.headers["content-type"]:
                             extension = ".pdf"
+                            break
                     except Exception as e:
                         _log(traceback.format_exc())
                         pass
