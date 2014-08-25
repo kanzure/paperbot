@@ -332,6 +332,8 @@ def download_url(url, _log=nullLog, **kwargs):
     paperbot_download_request_obj._log = _log
     response_generator = paperbot_download_request_obj.get(url, use_generator=True, headers={"User-Agent": "origami-pdf"})
     for response in response_generator:
+        paperbot_download_request_obj2 = paperbot_download_request()
+        paperbot_download_request_obj2._log = _log
         content = response.content
         #response = requests.get(url, headers={"User-Agent": "origami-pdf"}, **kwargs)
         #content = response.content
@@ -387,7 +389,7 @@ def download_url(url, _log=nullLog, **kwargs):
                                 domain_url = main_url_split[1].split('/')[0]
                                 pdf_url = http_prefix + '//' + domain_url + ('/' if pdf_url[0]!='/' else '') + pdf_url
 
-                        new_response, extension = paperbot_download_request_obj.get(pdf_url, headers={"User-Agent": "sdf-macross"})
+                        new_response, extension = paperbot_download_request_obj2.get(pdf_url, headers={"User-Agent": "sdf-macross"})
                         new_content = new_response.content
                         if "pdf" in new_response.headers["content-type"]:
                             extension = ".pdf"
