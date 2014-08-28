@@ -7,7 +7,7 @@ import json
 import logging
 log = logging.getLogger("paperbot.ezproxy")
 
-# This directory stories json files that each contain information about a
+# This directory stores json files that each contain information about a
 # unique ezproxy endpoint that could be tried.
 EZPROXY_DIR = os.environ.get(
     "EZPROXY_DIR",
