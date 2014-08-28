@@ -19,8 +19,18 @@ EZPROXY_DIR = os.environ.get(
     )
 )
 
-# Default ezproxy config is empty because none of the files have been loaded yet.
-EZPROXY_CONFIG = {}
+def load_json_file(path):
+    """
+    Load and parse json representing an ezproxy endpoint.
+    """
+    # open up the file to read ezproxy config
+    with open(realpath, "r") as configfile:
+        config = configfile.read()
+
+    # parse config as json
+    ezconfig = json.loads(config)
+
+    return ezconfig
 
 def load_ezproxy_config(ezproxy_dir=EZPROXY_DIR):
     """
@@ -28,12 +38,11 @@ def load_ezproxy_config(ezproxy_dir=EZPROXY_DIR):
     as the ezproxy url template, username, password, and possibly other
     details.
     """
+    ezproxy_config = {}
+
     if not os.path.exists(ezproxy_dir):
         log.debug("Not loading ezproxy configs because EZPROXY_DIR doesn't exist: {}".format(ezproxy_dir))
-        return {}
-
-    # blank the existing ezproxy configs
-    EZPROXY_CONFIG = {}
+        return ezproxy_config
 
     # look at the directory to see config files
     filenames = os.listdir(ezproxy_dir)
@@ -57,12 +66,8 @@ def load_ezproxy_config(ezproxy_dir=EZPROXY_DIR):
         # get abspath to this json file
         realpath = os.path.abspath(os.path.join(ezproxy_dir, filename))
 
-        # open up the file to read ezproxy config
-        with open(realpath, "r") as configfile:
-            config = configfile.read()
-
-        # parse config as json
-        ezconfig = json.loads(config)
+        # open up the file and read ezproxy config
+        ezconfig = load_json_file(realpath)
 
         # dump in some extra data why not
         ezconfig.update({
@@ -71,9 +76,9 @@ def load_ezproxy_config(ezproxy_dir=EZPROXY_DIR):
         })
 
         # store this config for later
-        EZPROXY_CONFIG[name] = ezconfig
+        ezproxy_config[name] = ezconfig
 
-    return EZPROXY_CONFIG
+    return ezproxy_config
 
 # default action is dothings
-load_ezproxy_config()
+EZPROXY_CONFIG = load_ezproxy_config()
