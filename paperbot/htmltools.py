@@ -55,7 +55,7 @@ def extract_metadata(tree, meta_attribute_mapping=meta_attribute_mapping):
         except:
             log.debug("Couldn't find {metakey} in the html.".format(metakey=metakey))
         else:
-            log.debug("Found {metakey} with value {value}".format(value=value))
+            log.debug("Found {metakey} with value {value}".format(metakey=metakey, value=value))
             output[paperkey] = value
 
     return output
