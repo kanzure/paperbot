@@ -198,7 +198,7 @@ def download(url, paper=None):
             log.debug("HTTP GET {}".format(urldoi))
             response = requests.get(urldoi, headers=DEFAULT_HEADERS)
 
-            if is_pdf_response(response):
+            if is_response_pdf(response):
                 log.debug("Got pdf from libgen.")
 
                 # skip pdfparanoia because it's from libgen
