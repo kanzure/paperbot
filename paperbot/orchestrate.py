@@ -56,7 +56,7 @@ def remove_watermarks(pdfcontent):
     Use pdfparanoia to remove watermarks from the pdf.
     """
     log.debug("Removing pdf watermarks.")
-    pdfcontent = pdfparanoia.scrub(StringIO(pdfontent))
+    pdfcontent = pdfparanoia.scrub(StringIO(pdfcontent))
     return pdfcontent
 
 def iterdownload(url, paper, headers=DEFAULT_HEADERS, ezproxy_config=EZPROXY_CONFIG):
