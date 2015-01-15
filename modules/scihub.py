@@ -27,9 +27,10 @@ def cookie(fn):
         return fn(*ar, **kw)
     return _fn
 
+
 def libgen(pdfstr, doi, **kwargs):
     # Check for existence of paper
-    paper_uri = requests.head( "http://libgen.org/scimag/get.php?doi=" + urllib.quote_plus(doi) )
+    paper_uri = requests.head("http://libgen.org/scimag/get.php?doi=" + urllib.quote_plus(doi))
     if paper_uri.status_code == 200:
         return "http://libgen.org/scimag/get.php?doi=" + urllib.quote_plus(doi)
 
@@ -37,8 +38,10 @@ def libgen(pdfstr, doi, **kwargs):
     auth_ = requests.auth.HTTPBasicAuth("genesis", "upload")
 
     # Fill in form-work with file and DOI
-    re = requests.post("http://libgen.org/scimag/librarian/form.php", auth = auth_,
-       files = {"uploadedfile":("derp.pdf", pdfstr)}, data = {"doi": doi})
+    re = requests.post("http://libgen.org/scimag/librarian/form.php",
+                       auth=auth_,
+                       files={"uploadedfile": ("derp.pdf", pdfstr)},
+                       data={"doi": doi})
 
     # At this point we're forwarded to a form with all of the metadata extracted and sitting in the form
 
@@ -49,15 +52,19 @@ def libgen(pdfstr, doi, **kwargs):
     formp = dict(map(lambda x: (x.get("name"), x.get("value")), shu.xpath("//input[@name]")))
 
     # Explicit force POST... TODO: generalize with a submit operation.
-    re = requests.get("http://libgen.org/scimag/librarian/register.php", data = formp, auth = auth_)
+    re = requests.get("http://libgen.org/scimag/librarian/register.php",
+                      data=formp,
+                      auth=auth_)
 
     # Return the full URI
     return "http://libgen.org/scimag/get.php?doi=" + urllib.quote_plus(doi)
+
 
 @cookie
 def scihub_dl(url, **kwargs):
     re = requests.get(url, **kwargs)
     return re.content
+
 
 @cookie
 def scihubber(url, **kwargs):
@@ -67,28 +74,29 @@ def scihubber(url, **kwargs):
     """
     a = urlparse(url)
     geturl = "http://%s.sci-hub.org/%s?%s" % (a.hostname, a.path, a.query)
-    def _go(_url, _doi = None):
+
+    def _go(_url, _doi=None):
         try:
             re = requests.get(_url, **kwargs).text.encode("utf8")
         except Exception as exception:
             return None
         if not re:
             return None
-        shu = etree.parse(StringIO(re),etree.HTMLParser())
+        shu = etree.parse(StringIO(re), etree.HTMLParser())
         if not _doi:
-            metas = map(lambda x:x.get("content"), shu.xpath("//meta[contains(@name,'doi')]"))
-            _as = map(lambda x:urllib.unquote(x.get("href")), shu.xpath("//a[contains(@href,'doi')]"))
-            maybedoi = filter(lambda x:str.find(x, "10.") != -1, metas + _as)
+            metas = map(lambda x: x.get("content"), shu.xpath("//meta[contains(@name,'doi')]"))
+            _as = map(lambda x: urllib.unquote(x.get("href")), shu.xpath("//a[contains(@href,'doi')]"))
+            maybedoi = filter(lambda x: str.find(x, "10.") != -1, metas + _as)
             if maybedoi:
-                ix = str.find(maybedoi[0],"10.")
+                ix = str.find(maybedoi[0], "10.")
                 _doi = maybedoi[0][ix:]
-        just = map(lambda x:x.get("src"), shu.xpath("//frame[@name='_pdf']"))
+        just = map(lambda x: x.get("src"), shu.xpath("//frame[@name='_pdf']"))
         if just:
             return (just[0], _doi)
-        derp = map(lambda x:x.get("src"), shu.xpath("(//frame | //iframe)[contains(@src,'pdf')]"))
-        derp += map(lambda x:x.get("href"), shu.xpath("//a[contains(@href,'pdf')]"))
+        derp = map(lambda x: x.get("src"), shu.xpath("(//frame | //iframe)[contains(@src,'pdf')]"))
+        derp += map(lambda x: x.get("href"), shu.xpath("//a[contains(@href,'pdf')]"))
         it = itertools.ifilter(None,
-            itertools.imap(lambda x: _go("http://%s.sci-hub.org/%s" % (a.hostname, x), _doi), derp))
+                               itertools.imap(lambda x: _go("http://%s.sci-hub.org/%s" % (a.hostname, x), _doi), derp))
         try:
             return it.next()
         except StopIteration:
