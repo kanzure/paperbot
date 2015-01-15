@@ -19,6 +19,10 @@ logchannel = os.environ.get("LOGGING", None)
 PROXY = 'http://ec2-54-218-13-46.us-west-2.compute.amazonaws.com:8500/plsget'
 USER_AGENT = 'Mozilla/5.0 (X11; Linux i686 (x86_64)) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11'
 
+ARCHIVE_DIR = '/home/bryan/public_html/papers2/paperbot/'
+ARCHIVE_BASE = 'http://diyhpl.us/~bryan/papers2/paperbot/'
+IEEE_EXPLORE_BASE = 'http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber='
+
 proxy_list = [
     {
         'proxy_url': None,
@@ -85,7 +89,8 @@ class paperbot_download_request(object):
                     # I don't know if passing None or {} for headers is bad, so
                     # I put this if:
                     if headers is not None:
-                        response = requests.get(pdf_url, headers=headers, proxies=proxies)
+                        response = requests.get(pdf_url, headers=headers,
+                                                proxies=proxies)
                     else:
                         response = requests.get(pdf_url, proxies=proxies)
             if use_generator:
@@ -101,10 +106,12 @@ class paperbot_download_request(object):
                     # return
 
             if 'proxies_remaining' in response.headers:
-                _log('proxies_remaining in headers: %s' % response.headers['proxies_remaining'])
+                remaining = response.headers['proxies_remaining']
+                _log('proxies_remaining in headers: %s' % remaining)
                 # decrement the index if the custom proxy doesn't have any more
                 # internal proxies to try
-                if response.headers['proxies_remaining'] == 0 or response.headers['proxies_remaining'] == '0':
+                if response.headers['proxies_remaining'] == 0 or \
+                   response.headers['proxies_remaining'] == '0':
                     proxies_left_to_try -= 1
                     request_iteration = 0
                     proxy_url_index += 1
@@ -403,7 +410,8 @@ def download_url(url, _log=nullLog, **kwargs):
                 # citation_title = ...
 
             # wow, this seriously needs to be cleaned up
-            if citation_pdf_url and citation_title and "ieeexplore.ieee.org" not in citation_pdf_url:
+            if citation_pdf_url and citation_title and \
+               "ieeexplore.ieee.org" not in citation_pdf_url:
                 citation_title = citation_title.encode("ascii", "ignore")
                 response = requests.get(citation_pdf_url, headers={"User-Agent": "pdf-defense-force"})
                 content = response.content
@@ -530,7 +538,7 @@ def download_url(url, _log=nullLog, **kwargs):
     # can't create directories
     title = title.replace("/", "_")
 
-    path = os.path.join("/home/bryan/public_html/papers2/paperbot/", title + extension)
+    path = os.path.join(ARCHIVE_DIR, title + extension)
 
     if extension in [".pdf", "pdf"]:
         try:
@@ -544,7 +552,7 @@ def download_url(url, _log=nullLog, **kwargs):
     file_handler.close()
 
     title = title.encode("ascii", "ignore")
-    url = "http://diyhpl.us/~bryan/papers2/paperbot/" + requests.utils.quote(title) + extension
+    url = ARCHIVE_BASE + requests.utils.quote(title) + extension
 
     return url
 
@@ -621,7 +629,7 @@ def fix_ieee_login_urls(url):
             else:
                 arnumber = parts[1]
 
-            return "http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=" + arnumber
+            return IEEE_EXPLORE_BASE + arnumber
 
     # default case when things go wrong
     return url
