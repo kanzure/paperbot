@@ -10,24 +10,39 @@ import lxml.etree
 from StringIO import StringIO
 import modules.scihub
 import urllib
-import traceback 
+import traceback
 
 import pdfparanoia
 
 logchannel = os.environ.get("LOGGING", None)
-proxy_list = [  {'proxy_url':None,'proxy_type':'normal'},
-                {'proxy_url':'http://ec2-54-218-13-46.us-west-2.compute.amazonaws.com:8500/plsget', 'proxy_type':'custom_flask_json'} ]
+
+PROXY = 'http://ec2-54-218-13-46.us-west-2.compute.amazonaws.com:8500/plsget'
+USER_AGENT = 'Mozilla/5.0 (X11; Linux i686 (x86_64)) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11'
+
+proxy_list = [
+    {
+        'proxy_url': None,
+        'proxy_type': 'normal'},
+    {
+        'proxy_url': PROXY,
+        'proxy_type': 'custom_flask_json'
+    }
+]
+
+
 def nullLog(msg):
     pass
 
+
 class paperbot_download_request(object):
-    _log=nullLog
+    _log = nullLog
+
     def get(self, pdf_url, use_generator=False, **kwargs):
         proxies_left_to_try = len(proxy_list)
         extension = ".txt"
         request_iteration = 0
         proxy_url_index = 0
-        user_agent = "Mozilla/5.0 (X11; Linux i686 (x86_64)) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11"
+        user_agent = USER_AGENT
         headers = {
             "User-Agent": user_agent,
         }
@@ -38,32 +53,37 @@ class paperbot_download_request(object):
             proxy_type = proxy_list[proxy_url_index]['proxy_type']
             _log('proxies_left_to_try: %d proxy_url_index %d' % (proxies_left_to_try, proxy_url_index))
             _log('request_iteration: %d' % request_iteration)
-            #perform default behaviour if proxy is None
+            # perform default behaviour if proxy is None
             if proxy_list[proxy_url_index]['proxy_url'] is None:
                 if pdf_url.startswith("https://"):
                     response = requests.get(pdf_url,  verify=False, **kwargs)
                 else:
                     response = requests.get(pdf_url, **kwargs)
             else:
-                #check type of proxy
+                # check type of proxy
                 if proxy_type == 'custom_flask_json':
-                    data = {'pdf_url' : pdf_url,
-                            'headers' : kwargs.get('headers', None),
-                            'request_iteration' : request_iteration
-                            }
-                    
+                    data = {
+                        'pdf_url': pdf_url,
+                        'headers': kwargs.get('headers', None),
+                        'request_iteration': request_iteration
+                    }
+
                     headers["Content-Type"] = "application/json"
-                    
+
                     _log('trying custom_flask_json, proxy_url %s' % proxy_url)
-                    response = requests.get(proxy_url, data=json.dumps(data), headers=headers)
+                    response = requests.get(proxy_url, data=json.dumps(data),
+                                            headers=headers)
                 elif proxy_type == 'normal':
-                    #i'm not even checking if http or https is in the pdf_url, since the default proxy of None is already being tried in this loop
-                    proxies = { 
-                      "http": proxy_url,
-                      "https": proxy_url,
+                    # i'm not even checking if http or https is in the pdf_url,
+                    # since the default proxy of None is already being tried in
+                    # this loop
+                    proxies = {
+                        "http": proxy_url,
+                        "https": proxy_url,
                     }
                     headers = kwargs.get('headers', None)
-                    #I don't know if passing None or {} for headers is bad, so I put this if:
+                    # I don't know if passing None or {} for headers is bad, so
+                    # I put this if:
                     if headers is not None:
                         response = requests.get(pdf_url, headers=headers, proxies=proxies)
                     else:
@@ -75,32 +95,34 @@ class paperbot_download_request(object):
                 if "pdf" in response.headers["content-type"]:
                     extension = ".pdf"
                     _log('yielding tuply with PDF in response')
-                    #yield (response, extension)
-                    proxies_left_to_try=0
+                    # yield (response, extension)
+                    proxies_left_to_try = 0
                     break
-                    #return
+                    # return
 
             if 'proxies_remaining' in response.headers:
                 _log('proxies_remaining in headers: %s' % response.headers['proxies_remaining'])
-                #decrement the index if the custom proxy doesn't have any more internal proxies to try
+                # decrement the index if the custom proxy doesn't have any more
+                # internal proxies to try
                 if response.headers['proxies_remaining'] == 0 or response.headers['proxies_remaining'] == '0':
-                    proxies_left_to_try-=1
-                    request_iteration=0
-                    proxy_url_index+=1
+                    proxies_left_to_try -= 1
+                    request_iteration = 0
+                    proxy_url_index += 1
                 else:
                     _log('request_iteration+=1')
-                    request_iteration+=1
+                    request_iteration += 1
 
-            else:    
-                #decrement the index to move on to the next proxy in our proxy_list
-                proxies_left_to_try-=1
-                request_iteration=0
-                proxy_url_index+=1
+            else:
+                # decrement the index to move on to the next proxy in our
+                # proxy_list
+                proxies_left_to_try -= 1
+                request_iteration = 0
+                proxy_url_index += 1
         if use_generator:
             return
         _log('last yield in paperbot_download_request')
         yield (response, extension)
-        
+
 
 def download(phenny, input, verbose=True):
     """
@@ -136,7 +158,8 @@ def download(phenny, input, verbose=True):
         line = line.strip()
 
     # don't bother if there's nothing there
-    if len(line) < 5 or (not "http://" in line and not "https://" in line) or not line.startswith("http"):
+    if len(line) < 5 or ("http://" not in line and "https://" not in line) or \
+       not line.startswith("http"):
         return
     for line in re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', line):
         # fix an UnboundLocalError problem
@@ -169,18 +192,19 @@ def download(phenny, input, verbose=True):
             item = content[0]
             title = item["title"]
 
-            if item.has_key("DOI"):
+            if "DOI" in item:
                 _log("Translator DOI")
-                lgre = requests.post("http://libgen.org/scimag/librarian/form.php", data={"doi":item["DOI"]})
+                lgre = requests.post("http://libgen.org/scimag/librarian/form.php",
+                                     data={"doi": item["DOI"]})
                 tree = parse_html(lgre.content)
                 if tree.xpath("//h1")[0].text != "No file selected":
                     phenny.say("http://libgen.org/scimag/get.php?doi=%s" % urllib.quote_plus(item["DOI"]))
                     return
 
-            if item.has_key("attachments"):
+            if "attachments" in item:
                 pdf_url = None
                 for attachment in item["attachments"]:
-                    if attachment.has_key("mimeType") and "application/pdf" in attachment["mimeType"]:
+                    if "mimeType" in attachment and "application/pdf" in attachment["mimeType"]:
                         pdf_url = attachment["url"]
                         break
 
@@ -209,17 +233,17 @@ def download(phenny, input, verbose=True):
 
                         #check type of proxy
                         if proxy_type == 'custom_flask_json':
-                            
+
                             headers["Content-Type"] = "application/json"
                             data = {'pdf_url' : pdf_url,
                                     'request_iteration' : request_iteration
                                     }
-                            
+
                             request_iteration+=1
                             response = requests.get(proxy_url, data=json.dumps(data), headers=headers)
                         elif proxy_type == 'normal':
                             #i'm not even checking if http or https is in the pdf_url, since the default proxy of None is already being tried in this loop
-                            proxies = { 
+                            proxies = {
                               "http": proxy_url,
                               "https": proxy_url,
                             }
@@ -228,7 +252,7 @@ def download(phenny, input, verbose=True):
                     paperbot_download_request_obj = paperbot_download_request()
                     paperbot_download_request_obj._log = _log
                     gen = paperbot_download_request_obj.get(pdf_url, use_generator=False, headers=headers)
-                    #this is stupidly ugly
+                    # this is stupidly ugly
                     for genresponse in gen:
                         response, extension = genresponse
 
@@ -251,7 +275,8 @@ def download(phenny, input, verbose=True):
                             data = pdfparanoia.scrub(StringIO(data))
                             try:
                                 _log('after pdfparanoia.scrub')
-                                requests.get('http://localhost:8500/remoteprint', headers={'msg':'after pdfparanoia.scrub'})
+                                requests.get('http://localhost:8500/remoteprint',
+                                             headers={'msg': 'after pdfparanoia.scrub'})
                             except:
                                 pass
                             break
@@ -264,7 +289,7 @@ def download(phenny, input, verbose=True):
                                     proxies_left_to_try-=1
                                     proxy_url_index+=1
                                     request_iteration=0
-                            else:    
+                            else:
                                 #decrement the index to move on to the next proxy in our proxy_list
                                 proxies_left_to_try-=1
                                 proxy_url_index+=1
@@ -272,7 +297,7 @@ def download(phenny, input, verbose=True):
                             # this is to avoid a PDFNotImplementedError
                             pass
 
-                    if item.has_key("DOI"):
+                    if "DOI" in item:
                         phenny.say(modules.scihub.libgen(data, item["DOI"]))
                         return
 
@@ -311,9 +336,12 @@ def download(phenny, input, verbose=True):
             _log("Scihubber -> (%s, %s)" % (shurl, doi))
         if shurl:
             if "pdfcache" in shurl:
-                if doi: phenny.say(modules.scihub.libgen(modules.scihub.scihub_dl(shurl), doi))
-                else: phenny.say(download_url(shurl, _log, cookies=modules.scihub.shcookie))
-            else: phenny.say(shurl)
+                if doi:
+                    phenny.say(modules.scihub.libgen(modules.scihub.scihub_dl(shurl), doi))
+                else:
+                    phenny.say(download_url(shurl, _log, cookies=modules.scihub.shcookie))
+            else:
+                phenny.say(shurl)
         elif verbose and explicit:
             _log("All approaches failed")
             phenny.say(download_url(line, _log))
@@ -334,20 +362,21 @@ def download_ieee(url):
     # url = "http://ieeexplore.ieee.org/iel5/27/19498/00901261.pdf?arnumber=901261"
     raise NotImplementedError
 
+
 def download_url(url, _log=nullLog, **kwargs):
     paperbot_download_request_obj = paperbot_download_request()
     paperbot_download_request_obj._log = _log
     response_generator = paperbot_download_request_obj.get(url, use_generator=True, headers={"User-Agent": "origami-pdf"})
-    cc=0
+    cc = 0
     for response in response_generator:
         _log('using generator for %s time' % cc)
-        cc+=1
+        cc += 1
         paperbot_download_request_obj2 = paperbot_download_request()
         paperbot_download_request_obj2._log = _log
         content = response.content
-        #response = requests.get(url, headers={"User-Agent": "origami-pdf"}, **kwargs)
-        #content = response.content
-        
+        # response = requests.get(url, headers={"User-Agent": "origami-pdf"}, **kwargs)
+        # content = response.content
+
         # just make up a default filename
         title = "%0.2x" % random.getrandbits(128)
 
@@ -374,7 +403,7 @@ def download_url(url, _log=nullLog, **kwargs):
                 # citation_title = ...
 
             # wow, this seriously needs to be cleaned up
-            if citation_pdf_url and citation_title and not "ieeexplore.ieee.org" in citation_pdf_url:
+            if citation_pdf_url and citation_title and "ieeexplore.ieee.org" not in citation_pdf_url:
                 citation_title = citation_title.encode("ascii", "ignore")
                 response = requests.get(citation_pdf_url, headers={"User-Agent": "pdf-defense-force"})
                 content = response.content
@@ -382,24 +411,26 @@ def download_url(url, _log=nullLog, **kwargs):
                     extension = ".pdf"
                     title = citation_title
             else:
-                if "sciencedirect.com" in url and not "ShoppingCart" in url:
+                if "sciencedirect.com" in url and "ShoppingCart" not in url:
                     _log('download_url got a sciencedirect URL')
                     try:
                         try:
                             title = tree.xpath("//h1[@class='svTitle']")[0].text
                             pdf_url = tree.xpath("//a[@id='pdfLink']/@href")[0]
-                        except IndexError: 
+                        except IndexError:
                             title = tree.xpath("//title")[0].text
                             pdf_url = tree.xpath("//a[@id='pdfLink']/@href")[0]
-                        
+
                         if 'http' not in pdf_url:
                             main_url_split = response.url.split('//')
                             http_prefix = main_url_split[0]
                             if 'http' in http_prefix:
                                 domain_url = main_url_split[1].split('/')[0]
-                                pdf_url = http_prefix + '//' + domain_url + ('/' if pdf_url[0]!='/' else '') + pdf_url
-                        gen = paperbot_download_request_obj2.get(pdf_url, use_generator=False, headers={"User-Agent": "sdf-macross"})
-                        #this is stupidly ugly
+                                pdf_url = http_prefix + '//' + domain_url + ('/' if pdf_url[0] != '/' else '') + pdf_url
+                        gen = paperbot_download_request_obj2.get(pdf_url,
+                                                                 use_generator=False,
+                                                                 headers={"User-Agent": "sdf-macross"})
+                        # this is stupidly ugly
                         for genresponse in gen:
                             new_response, extension = genresponse
                         new_content = new_response.content
@@ -430,10 +461,10 @@ def download_url(url, _log=nullLog, **kwargs):
                     # get the document id
                     document_id = None
                     if url[-1] != "/":
-                        #if "stable/" in url:
-                        #elif "discover/" in url:
-                        #elif "action/showShelf?candidate=" in url:
-                        #elif "pss/" in url:
+                        # if "stable/" in url:
+                        # elif "discover/" in url:
+                        # elif "action/showShelf?candidate=" in url:
+                        # elif "pss/" in url:
                         document_id = url.split("/")[-1]
 
                     if document_id.isdigit():
@@ -482,7 +513,7 @@ def download_url(url, _log=nullLog, **kwargs):
                         pass
                     else:
                         if pdf_url.startswith("/"):
-                            url_start = url[:url.find("/",8)]
+                            url_start = url[:url.find("/", 8)]
                             pdf_url = url_start + pdf_url
                         response = requests.get(pdf_url, headers={"User-Agent": "pdf-teapot"})
                         content = response.content
@@ -517,6 +548,7 @@ def download_url(url, _log=nullLog, **kwargs):
 
     return url
 
+
 def parse_html(content):
     if not isinstance(content, StringIO):
         content = StringIO(content)
@@ -524,21 +556,24 @@ def parse_html(content):
     tree = lxml.etree.parse(content, parser)
     return tree
 
+
 def check_if_html(response):
     return "text/html" in response.headers["content-type"]
+
 
 def find_citation_pdf_url(tree, url):
     """
     Returns the <meta name="citation_pdf_url"> content attribute.
     """
     citation_pdf_url = extract_meta_content(tree, "citation_pdf_url")
-    if citation_pdf_url and  not citation_pdf_url.startswith("http"):
+    if citation_pdf_url and not citation_pdf_url.startswith("http"):
         if citation_pdf_url.startswith("/"):
-            url_start = url[:url.find("/",8)]
+            url_start = url[:url.find("/", 8)]
             citation_pdf_url = url_start + citation_pdf_url
         else:
             raise Exception("unhandled situation (citation_pdf_url)")
     return citation_pdf_url
+
 
 def find_citation_title(tree):
     """
@@ -546,6 +581,7 @@ def find_citation_title(tree):
     """
     citation_title = extract_meta_content(tree, "citation_title")
     return citation_title
+
 
 def extract_meta_content(tree, meta_name):
     try:
@@ -555,6 +591,7 @@ def extract_meta_content(tree, meta_name):
     else:
         return content
 
+
 def filter_fix(url):
     """
     Fixes some common problems in urls.
@@ -562,6 +599,7 @@ def filter_fix(url):
     if ".proxy.lib.pdx.edu" in url:
         url = url.replace(".proxy.lib.pdx.edu", "")
     return url
+
 
 def fix_ieee_login_urls(url):
     """
@@ -588,12 +626,12 @@ def fix_ieee_login_urls(url):
     # default case when things go wrong
     return url
 
+
 def fix_jstor_pdf_urls(url):
     """
     Fixes urls pointing to jstor pdfs.
     """
     if "jstor.org/" in url:
-        if ".pdf" in url and not "?acceptTC=true" in url:
+        if ".pdf" in url and "?acceptTC=true" not in url:
             url += "?acceptTC=true"
     return url
-
