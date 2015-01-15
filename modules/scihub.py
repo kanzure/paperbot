@@ -26,7 +26,7 @@ def cookie(fn):
     return _fn
 
 def libgen(pdfstr, doi, **kwargs):
-    # Check for existence of paper 
+    # Check for existence of paper
     paper_uri = requests.head( "http://libgen.org/scimag/get.php?doi=" + urllib.quote_plus(doi) )
     if paper_uri.status_code == 200:
         return "http://libgen.org/scimag/get.php?doi=" + urllib.quote_plus(doi)
@@ -40,7 +40,7 @@ def libgen(pdfstr, doi, **kwargs):
 
     # At this point we're forwarded to a form with all of the metadata extracted and sitting in the form
 
-    # Parse returned HTML 
+    # Parse returned HTML
     shu = etree.parse(StringIO(re.text), etree.HTMLParser())
 
     # build dict with all named fields
@@ -49,7 +49,7 @@ def libgen(pdfstr, doi, **kwargs):
     # Explicit force POST... TODO: generalize with a submit operation.
     re = requests.get("http://libgen.org/scimag/librarian/register.php", data = formp, auth = auth_)
 
-    # Return the full URI 
+    # Return the full URI
     return "http://libgen.org/scimag/get.php?doi=" + urllib.quote_plus(doi)
 
 @cookie
