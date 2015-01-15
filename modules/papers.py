@@ -217,45 +217,6 @@ def download(phenny, input, verbose=True):
 
                 if pdf_url:
                     user_agent = "Mozilla/5.0 (X11; Linux i686 (x86_64)) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11"
-                    """
-                proxies_left_to_try = len(proxy_list)
-                request_iteration = 0
-                proxy_url_index=0
-                _log('before while proxies_left_to_try')
-                while proxies_left_to_try:
-                    headers = {
-                        "User-Agent": user_agent,
-                    }
-                    response = None
-                    proxy_url = proxy_list[proxy_url_index]['proxy_url']
-                    proxy_type = proxy_list[proxy_url_index]['proxy_type']
-                    _log('proxies_left_to_try: %d' % proxies_left_to_try)
-                    #perform default behaviour if proxy is None
-                    if proxy_url is None:
-                        if pdf_url.startswith("https://"):
-                            response = requests.get(pdf_url, headers=headers, verify=False)
-                        else:
-                            response = requests.get(pdf_url, headers=headers)
-                    else:
-
-                        #check type of proxy
-                        if proxy_type == 'custom_flask_json':
-
-                            headers["Content-Type"] = "application/json"
-                            data = {'pdf_url' : pdf_url,
-                                    'request_iteration' : request_iteration
-                                    }
-
-                            request_iteration+=1
-                            response = requests.get(proxy_url, data=json.dumps(data), headers=headers)
-                        elif proxy_type == 'normal':
-                            #i'm not even checking if http or https is in the pdf_url, since the default proxy of None is already being tried in this loop
-                            proxies = {
-                              "http": proxy_url,
-                              "https": proxy_url,
-                            }
-                            response = requests.get(pdf_url, headers=headers, proxies=proxies)
-                    """
                     paperbot_download_request_obj = paperbot_download_request()
                     paperbot_download_request_obj._log = _log
                     gen = paperbot_download_request_obj.get(pdf_url, use_generator=False, headers=headers)
@@ -288,19 +249,6 @@ def download(phenny, input, verbose=True):
                                 pass
                             break
                         except:
-                            """
-                            #check for custom_flask_json proxy response, which indicates if the given custom proxy has more internal proxies to try with
-                            if 'proxies_remaining' in response.headers:
-                                #decrement the index if the custom proxy doesn't have any more internal proxies to try
-                                if response.headers['proxies_remaining'] == 0:
-                                    proxies_left_to_try-=1
-                                    proxy_url_index+=1
-                                    request_iteration=0
-                            else:
-                                #decrement the index to move on to the next proxy in our proxy_list
-                                proxies_left_to_try-=1
-                                proxy_url_index+=1
-                            """
                             # this is to avoid a PDFNotImplementedError
                             pass
 
