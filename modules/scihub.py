@@ -11,6 +11,8 @@ import urllib
 import os
 
 
+LIBGEN_URL = "http://libgen.org/scimag/get.php?doi="
+
 scihub_cookie = os.environ.get("SCIHUB_PASSWORD", None)
 if scihub_cookie:
     shcookie = {scihub_cookie: ""}
@@ -30,7 +32,7 @@ def cookie(fn):
 
 def libgen(pdfstr, doi, **kwargs):
     # Check for existence of paper
-    paper_uri = requests.head("http://libgen.org/scimag/get.php?doi=" + urllib.quote_plus(doi))
+    paper_uri = requests.head(LIBGEN_URL + urllib.quote_plus(doi))
     if paper_uri.status_code == 200:
         return "http://libgen.org/scimag/get.php?doi=" + urllib.quote_plus(doi)
 
@@ -43,13 +45,15 @@ def libgen(pdfstr, doi, **kwargs):
                        files={"uploadedfile": ("derp.pdf", pdfstr)},
                        data={"doi": doi})
 
-    # At this point we're forwarded to a form with all of the metadata extracted and sitting in the form
+    # At this point we're forwarded to a form with all of the metadata
+    # extracted and sitting in the form
 
     # Parse returned HTML
     shu = etree.parse(StringIO(re.text), etree.HTMLParser())
 
     # build dict with all named fields
-    formp = dict(map(lambda x: (x.get("name"), x.get("value")), shu.xpath("//input[@name]")))
+    formp = dict(map(lambda x: (x.get("name"), x.get("value")),
+                     shu.xpath("//input[@name]")))
 
     # Explicit force POST... TODO: generalize with a submit operation.
     re = requests.get("http://libgen.org/scimag/librarian/register.php",
@@ -84,8 +88,10 @@ def scihubber(url, **kwargs):
             return None
         shu = etree.parse(StringIO(re), etree.HTMLParser())
         if not _doi:
-            metas = map(lambda x: x.get("content"), shu.xpath("//meta[contains(@name,'doi')]"))
-            _as = map(lambda x: urllib.unquote(x.get("href")), shu.xpath("//a[contains(@href,'doi')]"))
+            metas = map(lambda x: x.get("content"),
+                        shu.xpath("//meta[contains(@name,'doi')]"))
+            _as = map(lambda x: urllib.unquote(x.get("href")),
+                      shu.xpath("//a[contains(@href,'doi')]"))
             maybedoi = filter(lambda x: str.find(x, "10.") != -1, metas + _as)
             if maybedoi:
                 ix = str.find(maybedoi[0], "10.")
@@ -93,10 +99,16 @@ def scihubber(url, **kwargs):
         just = map(lambda x: x.get("src"), shu.xpath("//frame[@name='_pdf']"))
         if just:
             return (just[0], _doi)
-        derp = map(lambda x: x.get("src"), shu.xpath("(//frame | //iframe)[contains(@src,'pdf')]"))
-        derp += map(lambda x: x.get("href"), shu.xpath("//a[contains(@href,'pdf')]"))
+        derp = map(lambda x: x.get("src"),
+                   shu.xpath("(//frame | //iframe)[contains(@src,'pdf')]"))
+        derp += map(lambda x: x.get("href"),
+                    shu.xpath("//a[contains(@href,'pdf')]"))
+
+        def apply_go(x):
+            _go("http://%s.sci-hub.org/%s" % (a.hostname, x), _doi)
+
         it = itertools.ifilter(None,
-                               itertools.imap(lambda x: _go("http://%s.sci-hub.org/%s" % (a.hostname, x), _doi), derp))
+                               itertools.imap(lambda x: apply_go(x), derp))
         try:
             return it.next()
         except StopIteration:
