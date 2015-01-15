@@ -5,6 +5,7 @@ Basic plugin system for different scrapers.
 import logging
 log = logging.getLogger("paperbot.plugins.plugin")
 
+
 class Plugin(object):
     """
     Pluggable system for loading different scrapers for different publishers.

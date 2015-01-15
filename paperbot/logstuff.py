@@ -1,11 +1,12 @@
 import tempfile
 import logging
 
+
 def setup_logging():
     """
     Setup default logging handler to avoid "No handler found" warnings.
     """
-    try: # python 2.7+
+    try:  # python 2.7+
         from logging import NullHandler
     except ImportError:
         class NullHandler(logging.Handler):
@@ -15,7 +16,9 @@ def setup_logging():
         logging.getLogger("paperbot").addHandler(NullHandler())
 
     # this might be rude to enforce?
-    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+    logging.basicConfig(format='%(levelname)s:%(message)s',
+                        level=logging.DEBUG)
+
 
 def loghijack():
     """

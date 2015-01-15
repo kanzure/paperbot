@@ -13,11 +13,13 @@ from httptools import (
 
 log = logging.getLogger("paperbot.libgen")
 
+
 def make_libgen_doi_url(doi):
     """
     Make libgen url based on DOI.
     """
     return "http://libgen.org/scimag/get.php?doi={}".format(quote_plus(doi))
+
 
 def check_libgen_has_paper(doi):
     """
@@ -36,6 +38,7 @@ def check_libgen_has_paper(doi):
     else:
         return False
 
+
 def build_libgen_auth_fragment():
     """
     Construct authentication header for another request.
@@ -43,6 +46,7 @@ def build_libgen_auth_fragment():
     # found on some libgen forum maybe?
     authfragment = requests.auth.HTTPBasicAuth("genesis", "upload")
     return authfragment
+
 
 def upload_to_libgen(paperpath, doi):
     """
@@ -66,16 +70,19 @@ def upload_to_libgen(paperpath, doi):
     }
 
     log.debug("Uploading to libgen doi {} path {}".format(doi, paperpath))
-    response = requests.post("http://libgen.org/scimag/librarian/form.php", **kwargs)
+    response = requests.post("http://libgen.org/scimag/librarian/form.php",
+                             **kwargs)
 
     # parse returned html
     tree = parse_html(response)
 
     # build dict with all named fields from html
-    formp = dict(map(lambda x: (x.get("name"), x.get("value")), tree.xpath("//input[@name]")))
+    formp = dict(map(lambda x: (x.get("name"), x.get("value")),
+                     tree.xpath("//input[@name]")))
 
     log.debug("Submitting form back to libgen.")
-    response = requests.get("http://libgen.org/scimag/librarian/register.php", data=formp, auth=authfragment)
+    response = requests.get("http://libgen.org/scimag/librarian/register.php",
+                            data=formp, auth=authfragment)
 
     urldoi = make_libgen_doi_url(doi)
     log.debug("Completed libgen upload: {}".format(urldoi))

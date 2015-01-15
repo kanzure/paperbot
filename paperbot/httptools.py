@@ -12,6 +12,7 @@ from urllib import (
 
 import requests
 
+
 def run_url_fixers(url):
     """
     Clean up some common url problems.
@@ -27,6 +28,7 @@ def run_url_fixers(url):
 
     return url
 
+
 def is_same_url(url1, url2):
     """
     Normalize the given urls and check whether or not they are referencing the
@@ -36,6 +38,7 @@ def is_same_url(url1, url2):
     url1 = run_url_fixers(url1)
     url2 = run_url_fixers(url2)
     return url1 == url2
+
 
 def fix_ieee_login_url(url):
     """
@@ -62,11 +65,12 @@ def fix_ieee_login_url(url):
     # default case when things go wrong
     return url
 
+
 def fix_jstor_pdf_url(url):
     """
     Fixes urls pointing to jstor pdfs.
     """
     if "jstor.org/" in url:
-        if ".pdf" in url and not "?acceptTC=true" in url:
+        if ".pdf" in url and "?acceptTC=true" not in url:
             url += "?acceptTC=true"
     return url
