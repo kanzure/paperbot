@@ -20,8 +20,10 @@ else:
 
 def cookie(fn):
     def _fn(*ar, **kw):
-        if "cookies" not in kw: kw["cookies"] = shcookie
-        elif scihub_cookie not in kw["cookies"]: kw["cookies"].update(shcookie)
+        if "cookies" not in kw:
+            kw["cookies"] = shcookie
+        elif scihub_cookie not in kw["cookies"]:
+            kw["cookies"].update(shcookie)
         return fn(*ar, **kw)
     return _fn
 
@@ -70,7 +72,8 @@ def scihubber(url, **kwargs):
             re = requests.get(_url, **kwargs).text.encode("utf8")
         except Exception as exception:
             return None
-        if not re: return None
+        if not re:
+            return None
         shu = etree.parse(StringIO(re),etree.HTMLParser())
         if not _doi:
             metas = map(lambda x:x.get("content"), shu.xpath("//meta[contains(@name,'doi')]"))
@@ -80,13 +83,18 @@ def scihubber(url, **kwargs):
                 ix = str.find(maybedoi[0],"10.")
                 _doi = maybedoi[0][ix:]
         just = map(lambda x:x.get("src"), shu.xpath("//frame[@name='_pdf']"))
-        if just: return (just[0], _doi)
+        if just:
+            return (just[0], _doi)
         derp = map(lambda x:x.get("src"), shu.xpath("(//frame | //iframe)[contains(@src,'pdf')]"))
         derp += map(lambda x:x.get("href"), shu.xpath("//a[contains(@href,'pdf')]"))
         it = itertools.ifilter(None,
             itertools.imap(lambda x: _go("http://%s.sci-hub.org/%s" % (a.hostname, x), _doi), derp))
-        try: return it.next()
-        except StopIteration: return None
+        try:
+            return it.next()
+        except StopIteration:
+            return None
     ret = _go(geturl)
-    if ret: return ret
-    else: return (None, None)
+    if ret:
+        return ret
+    else:
+        return (None, None)
