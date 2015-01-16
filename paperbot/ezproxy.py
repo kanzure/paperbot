@@ -19,6 +19,7 @@ EZPROXY_DIR = os.environ.get(
     )
 )
 
+
 def load_json_file(path):
     """
     Load and parse json representing an ezproxy endpoint.
@@ -31,6 +32,7 @@ def load_json_file(path):
     ezconfig = json.loads(config)
 
     return ezconfig
+
 
 def load_ezproxy_config(ezproxy_dir=EZPROXY_DIR):
     """

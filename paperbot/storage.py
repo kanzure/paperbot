@@ -16,11 +16,13 @@ if not os.path.exists(DEFAULT_STORAGE_PATH):
     DEFAULT_STORAGE_PATH = "/tmp/"
 STORAGE_PATH = os.environ.get("STORAGE_PATH", DEFAULT_STORAGE_PATH)
 
+
 def make_random_string(bits=128):
     """
     Make a random string suitable as a filename.
     """
     return "%0.2x" % random.getrandbits(bits)
+
 
 def make_hash(content):
     """
@@ -29,6 +31,7 @@ def make_hash(content):
     md5sum = hashlib.md5()
     md5sum.update(content)
     return md5sum.hexdigest()
+
 
 def make_pdf_filename(paper, pdfcontent=None):
     """
@@ -47,11 +50,13 @@ def make_pdf_filename(paper, pdfcontent=None):
 
     return pdf_filename
 
+
 def make_full_path(filename, storage_path=STORAGE_PATH):
     """
     Construct a full path including the filename.
     """
     return os.path.join(storage_path, filename)
+
 
 def store_json(paper, storage_path=STORAGE_PATH):
     """
@@ -76,6 +81,7 @@ def store_json(paper, storage_path=STORAGE_PATH):
 
     return jsonpath
 
+
 def store_logs(paper, templogpath):
     """
     Store logs near other paper files. Return the path.
@@ -91,6 +97,7 @@ def store_logs(paper, templogpath):
     shutil.move(templogpath, desiredpath)
 
     return desiredpath
+
 
 def store(paper, pdfcontent=None):
     """

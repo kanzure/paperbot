@@ -39,17 +39,21 @@ from libgen import (
     upload_to_libgen,
 )
 
-USER_AGENT = os.environ.get("USER_AGENT", "pdf-defense-force-" + ("%0.2x" % random.getrandbits(8)))
+USER_AGENT_RAND = "%0.2x" % random.getrandbits(8)
+USER_AGENT = os.environ.get("USER_AGENT",
+                            "pdf-defense-force-" + USER_AGENT_RAND)
 
 DEFAULT_HEADERS = {
     "User-Agent": USER_AGENT,
 }
+
 
 def is_response_pdf(response):
     """
     Determines if the response contains a pdf.
     """
     return "pdf" in response.headers["content-type"]
+
 
 def remove_watermarks(pdfcontent):
     """
@@ -59,7 +63,9 @@ def remove_watermarks(pdfcontent):
     pdfcontent = pdfparanoia.scrub(StringIO(pdfontent))
     return pdfcontent
 
-def iterdownload(url, paper, headers=DEFAULT_HEADERS, ezproxy_config=EZPROXY_CONFIG):
+
+def iterdownload(url, paper, headers=DEFAULT_HEADERS,
+                 ezproxy_config=EZPROXY_CONFIG):
     """
     Download the content at the remote url. Use a variety of methods. Not all
     methods are always necessary. Sometimes none of the methods will return the
@@ -90,6 +96,7 @@ def iterdownload(url, paper, headers=DEFAULT_HEADERS, ezproxy_config=EZPROXY_CON
 
         # maybe this response is acceptable?
         yield (attempturl, response)
+
 
 def download(url, paper=None):
     """
@@ -176,7 +183,8 @@ def download(url, paper=None):
         break
 
     # was pdf downloaded?
-    if (hasattr(paper, "pdf") and paper.pdf not in [None, ""]) or os.path.exists(paper.file_path_pdf):
+    if (hasattr(paper, "pdf") and paper.pdf not in [None, ""]) or \
+       os.path.exists(paper.file_path_pdf):
         fetched = True
     else:
         fetched = False

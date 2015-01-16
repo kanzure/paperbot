@@ -23,6 +23,7 @@ meta_attribute_mapping = {
     "citation_language": "language",
 }
 
+
 class Paper(Model):
     """
     Represents collected information about a paper.

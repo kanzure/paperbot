@@ -10,6 +10,7 @@ from paperbot.ezproxy import (
     load_ezproxy_config,
 )
 
+
 class EzproxyTestCases(BaseTestCase):
     def test_load_ezproxy_config_path_does_not_exist(self):
         with mock.patch("os.path.exists", return_value=False) as ospathexists:
@@ -19,13 +20,16 @@ class EzproxyTestCases(BaseTestCase):
     @mock.patch("os.path.exists", return_value=True)
     @mock.patch("os.listdir", return_value=["test.json"])
     @mock.patch("paperbot.ezproxy.load_json_file", return_value={})
-    def test_load_ezproxy_config_calls_file_reader(self, load_json_file, oslistdir, ospathexists):
+    def test_load_ezproxy_config_calls_file_reader(self, load_json_file,
+                                                   oslistdir, ospathexists):
         load_ezproxy_config()
         self.assertTrue(load_json_file.called)
 
     @mock.patch("os.path.exists", return_value=True)
     @mock.patch("paperbot.ezproxy.load_json_file", return_value={})
-    def test_load_ezproxy_config_bails_on_no_json_filename(self, load_json_file, ospathexists):
+    def test_load_ezproxy_config_bails_on_no_json_filename(self,
+                                                           load_json_file,
+                                                           ospathexists):
         with mock.patch("os.listdir", return_value=["something.xml"]):
             output = load_ezproxy_config()
 
@@ -46,7 +50,8 @@ class EzproxyTestCases(BaseTestCase):
             },
         }
 
-        with mock.patch("paperbot.ezproxy.load_json_file", return_value=testjson):
+        with mock.patch("paperbot.ezproxy.load_json_file",
+                        return_value=testjson):
             output = load_ezproxy_config()
 
         # should still be a dictionary result
