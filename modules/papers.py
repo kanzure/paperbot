@@ -37,10 +37,10 @@ proxy_list = [
     {
         'proxy_url': None,
         'proxy_type': 'normal'},
-    {
-        'proxy_url': PROXY,
-        'proxy_type': 'custom_flask_json'
-    }
+#    {
+#        'proxy_url': PROXY,
+#        'proxy_type': 'custom_flask_json'
+#    }
 ]
 
 
