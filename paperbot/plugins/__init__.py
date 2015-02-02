@@ -1,2 +1,4 @@
 from plugin import Plugin
-from sciencedirect import ScienceDirectPlugin
+
+#seems to be missing
+#from sciencedirect import ScienceDirectPlugin

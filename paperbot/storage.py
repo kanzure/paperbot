@@ -12,7 +12,7 @@ import logging
 log = logging.getLogger("paperbot.storage")
 
 DEFAULT_STORAGE_PATH = "/home/bryan/public_html/papers2/paperbot/"
-if not os.path.exists(DEFAULT_STORAGE_PATH):
+if not (os.path.exists(DEFAULT_STORAGE_PATH) and os.access(DEFAULT_STORAGE_PATH, os.W_OK)):
     DEFAULT_STORAGE_PATH = "/tmp/"
 STORAGE_PATH = os.environ.get("STORAGE_PATH", DEFAULT_STORAGE_PATH)
 

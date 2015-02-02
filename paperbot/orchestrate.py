@@ -60,7 +60,7 @@ def remove_watermarks(pdfcontent):
     Use pdfparanoia to remove watermarks from the pdf.
     """
     log.debug("Removing pdf watermarks.")
-    pdfcontent = pdfparanoia.scrub(StringIO(pdfontent))
+    pdfcontent = pdfparanoia.scrub(StringIO(pdfcontent))
     return pdfcontent
 
 
@@ -206,7 +206,7 @@ def download(url, paper=None):
             log.debug("HTTP GET {}".format(urldoi))
             response = requests.get(urldoi, headers=DEFAULT_HEADERS)
 
-            if is_pdf_response(response):
+            if is_response_pdf(response):
                 log.debug("Got pdf from libgen.")
 
                 # skip pdfparanoia because it's from libgen
