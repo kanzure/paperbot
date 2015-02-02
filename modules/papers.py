@@ -29,7 +29,7 @@ HEADERS_TM_2 = {"User-Agent": "time-machine/2.0"}
 HEADERS_TEAPOT = {"User-Agent": "pdf-teapot"}
 HEADERS_DEFENSE = {"User-Agent": "pdf-defense-force"}
 
-LIBGEN_FORM = "http://libgen.org/scimag/librarian/form.php"
+LIBGEN_FORM = "http://libgen.info/scimag/librarian/form.php"
 
 URL_REGEX = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
 
@@ -223,7 +223,7 @@ def download(phenny, input, verbose=True):
                                      data={"doi": item["DOI"]})
                 tree = parse_html(lgre.content)
                 if tree.xpath("//h1")[0].text != "No file selected":
-                    phenny.say("http://libgen.org/scimag/get.php?doi=%s"
+                    phenny.say("http://libgen.info/scimag/get.php?doi=%s"
                                % urllib.quote_plus(item["DOI"]))
                     return
 
@@ -251,7 +251,7 @@ def download(phenny, input, verbose=True):
                         shurl, _ = modules.scihub.scihubber(pdf_url)
                         if shurl:
                             if "libgen" in shurl:
-                                phenny.say("http://libgen.org/scimag/get.php?doi=%s" % urllib.quote_plus(item["DOI"]))
+                                phenny.say("http://libgen.info/scimag/get.php?doi=%s" % urllib.quote_plus(item["DOI"]))
                             elif "pdfcache" not in shurl:
                                 phenny.say(shurl)
                             else:
